@@ -109,7 +109,20 @@ scroller.addEventListener('wheel', e => {
   const box = scroller.getBoundingClientRect();
   setZoom(next, { x: e.clientX - box.left, y: e.clientY - box.top });
 }, { passive: false });
-// 마우스로는 끌어서 옮긴다. 손가락은 브라우저가 알아서 옮겨 준다.
+// 폰에서는 두 손가락을 벌리거나 오므려서 키우고 줄인다. 두 손가락의 가운데를 중심으로 움직인다.
+let pinch;
+const spread = e => Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+scroller.addEventListener('touchstart', e => { pinch = e.touches.length === 2 ? { spread: spread(e), zoom } : null; });
+scroller.addEventListener('touchmove', e => {
+  if (!pinch || e.touches.length !== 2) return;
+  e.preventDefault(); // 페이지 전체가 커지는 것을 막는다
+  const box = scroller.getBoundingClientRect();
+  setZoom(pinch.zoom * spread(e) / pinch.spread, {
+    x: (e.touches[0].clientX + e.touches[1].clientX) / 2 - box.left,
+    y: (e.touches[0].clientY + e.touches[1].clientY) / 2 - box.top });
+}, { passive: false });
+scroller.addEventListener('touchend', () => { pinch = null; });
+// 마우스로는 끌어서 옮긴다. 손가락 하나로 끄는 것은 브라우저가 알아서 옮겨 준다.
 scroller.addEventListener('pointerdown', e => {
   if (e.pointerType !== 'mouse') return;
   const move = m => scroller.scrollBy(-m.movementX, -m.movementY);
