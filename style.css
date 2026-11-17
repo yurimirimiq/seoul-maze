@@ -33,14 +33,16 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 70
 .wordmark .i::before { content: ''; position: absolute; left: 50%; bottom: .84em; width: .18em; height: .18em; margin-left: -.09em; border-radius: 50%; background: var(--here); }
 .brand { display: inline-block; margin-bottom: 10px; font-size: 1.125rem; }
 
-/* 홈 */
-.hero { padding: 40px 0 28px; border-bottom: 1px solid var(--rule); }
+/* 홈: 워드마크, 한 줄 소개, 장소마다 미니 약도. 약도만 남색 판에 밝은 통로로 그려서 눈에 띄게 하고 나머지는 조용히 둔다 */
+.hero { padding: 40px 0 0; }
 .hero h1 { margin: 0; font-size: clamp(2.75rem, 15vw, 4.25rem); }
-.hero p { margin: 14px 0 0; font-size: .9375rem; font-weight: 500; letter-spacing: .32em; color: var(--muted); }
-.lead { margin: 20px 0 0; font-size: 1.0625rem; }
-.places li { border-bottom: 1px solid var(--rule); }
-.places .row { display: flex; align-items: center; gap: 12px; padding: 16px 8px; text-decoration: none; }
+.hero p { margin: 16px 0 0; font-size: 1.125rem; font-weight: 500; }
+.places { display: grid; gap: 28px; margin-top: 32px; }
+.places a { display: block; text-decoration: none; }
+.places img { display: block; box-sizing: border-box; width: 100%; aspect-ratio: 3 / 2; object-fit: contain; padding: 16px; border-radius: 12px; background: var(--ink); }
+.places .row { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
 .places .name { margin-right: auto; font-size: 1.5rem; font-weight: 700; line-height: 1.2; letter-spacing: -.03em; }
+.places small { display: block; margin-top: 2px; font-size: .875rem; color: var(--muted); }
 .lines { display: flex; gap: 4px; }
 .lines .line { display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%; font-size: .875rem; font-weight: 600;
   color: var(--line-ink, var(--ink)); background: var(--line); }

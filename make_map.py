@@ -177,6 +177,23 @@ def indoor_only(cfg):
     return data, indoor_xy
 
 
+def thumb(place, data):
+    """홈 화면에 거는 작은 약도 그림(<장소>/thumb.svg). 시작 층의 실내 모양만 그린다.
+    홈의 남색 판(style.css의 .places img) 위에 놓는 그림이라 바탕은 비우고, 통로는 밝게, 칸은 판보다 조금 밝은 남색으로 칠한다."""
+    shapes = data["shapes"]
+    floor = "B1" if "B1" in shapes else max(shapes, key=lambda f: len(shapes[f]))  # 지금은 세 곳 다 지하 1층에서 시작한다
+    path = lambda kinds: "".join("M" + " ".join("%.1f,%.1f" % tuple(map(float, p.split(","))) for p in pts.split()) + "Z" for kind, pts in shapes[floor] if kinds(kind))
+    rooms = path(lambda kind: kind not in ("바닥면", "바닥", "빈곳"))
+    assert rooms, f"{place}: {floor}층에 그릴 칸이 없음"
+    xs, ys = zip(*(map(float, p.split(",")) for _, pts in shapes[floor] for p in pts.split()))
+    box = "%.1f %.1f %.1f %.1f" % (min(xs) - 2, min(ys) - 2, max(xs) - min(xs) + 4, max(ys) - min(ys) + 4)
+    with open(f"{place}/thumb.svg", "w", encoding="utf-8") as f:
+        f.write(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{box}">'
+                # 바닥: 모든 칸을 굵은 밝은 테두리로 깔아 통로를 메운다(app.js의 halo와 같은 방법)
+                f'<path d="{path(lambda kind: kind != "빈곳")}" fill="#f1f3f8" stroke="#f1f3f8" stroke-width="1" stroke-linejoin="round"/>'
+                f'<path d="{rooms}" fill="#34437a" stroke="#f1f3f8" stroke-width=".1"/></svg>\n')
+
+
 def main(place):
     cfg = PLACES[place]
     data, indoor_xy = outdoor(cfg) if "bbox" in cfg else indoor_only(cfg)
@@ -228,6 +245,7 @@ def main(place):
         f.write("// make_map.py가 만든 파일. 손으로 고치지 말고 make_map.py를 다시 돌린다.\n")
         f.write("// 건물과 길: © OpenStreetMap contributors (ODbL). 실내: shapes.tsv, poi.tsv 참고.\n")
         f.write("const MAP = " + json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace('},{', '},\n{') + ";\n")
+    thumb(place, data)
     print(f"{place}/map.js 저장: 건물 {len(data['buildings'])}+{len(data['blocks'])}개, 길 {len(data['roads'])}개, "
           f"칸 {sum(map(len, shapes.values()))}개, 지점 {len(spots)}개, 크기 {WIDTH}x{data['height']}")
 
