@@ -3,8 +3,13 @@
 쓰는 법: python3 make_map.py coex
 새 장소 추가: 아래 PLACES에 항목을 하나 더 넣는다.
 
-- 건물, 길, 지하철 출구: 오픈스트리트맵에서 받는다. © OpenStreetMap contributors (ODbL)
-- 실내 칸 모양과 가게 위치: <장소>/shapes.tsv, <장소>/poi.tsv가 있으면 읽어서 약도 좌표로 바꾼다.
+- 바깥 지도(건물, 길, 지하철 출구): 오픈스트리트맵에서 받는다. © OpenStreetMap contributors (ODbL)
+- 실내(칸 모양, 가게 위치): <장소>/shapes.tsv, <장소>/poi.tsv를 읽는다. 둘은 공식 실내 지도의 좌표(1칸 = 10cm)로 적혀 있다.
+
+장소는 두 가지다.
+- bbox가 있는 곳(코엑스): 바깥 지도를 그리고 그 위에 실내를 돌리고 옮겨서 얹는다.
+- frame이 있는 곳(잠실): 바깥 지도 없이 실내 지도만 그린다. 공식 실내 지도가 건물들을 실제 위치와 다르게 벌려 놓아서
+  바깥 지도에 맞출 수 없을 때 쓴다.
 """
 import json
 import math
@@ -33,10 +38,16 @@ PLACES = {
             3404873904: "삼성역 5·6번 출구",  # 5번 출구 위치. 6번은 바로 옆이라 한 점으로 표시
             3824607465: "봉은사역 7번 출구",
         },
-        # poi.tsv 좌표(1칸 = 10cm)를 약도에 얹는 값: (돌리는 각도, 가로 이동, 세로 이동).
-        # poi.tsv에는 위도·경도가 없어서, 별마당도서관 건물과 눈에 띄는 가게 20여 곳의 실제 위치에 겹치게 맞췄다.
+        # 실내 좌표를 바깥 지도에 얹는 값: (돌리는 각도, 가로 이동, 세로 이동).
+        # 실내 자료에는 위도·경도가 없어서, 별마당도서관 건물과 눈에 띄는 가게 20여 곳의 실제 위치에 겹치게 맞췄다.
         # 맞춘 결과 북쪽 끝 가게는 봉은사역 7번 출구, 남동쪽 끝 맥도날드는 삼성역 5·6번 출구 옆에 온다. 오차는 대개 3~10m다.
         "poi_transform": (-114.24, 32.71, 110.69),
+    },
+    "jamsil": {
+        # 실내 좌표에서 화면에 넣을 범위 (왼쪽, 위, 오른쪽, 아래)
+        "frame": (284, 500, 15018, 7176),
+        # 건물 이름표: 이름 -> 실내 좌표. 건물 덩어리 바로 위에 둔다.
+        "labels": {"롯데백화점": (3789, 3480), "롯데월드몰": (11970, 3730), "캐슬플라자": (10779, 650)},
     },
 }
 
@@ -47,8 +58,8 @@ M_PER_LON = 88_300  # 서울 위도에서 경도 1도의 길이
 ROAD_WIDTH_M = {"trunk": 18, "primary": 18, "secondary": 14, "tertiary": 10, "residential": 6, "unclassified": 6}
 
 
-def main(place):
-    cfg = PLACES[place]
+def outdoor(cfg):
+    """오픈스트리트맵에서 바깥 지도를 받는다. (지도 데이터, 실내 좌표를 약도 좌표로 바꾸는 함수)를 돌려준다."""
     south, north, west, east = cfg["bbox"]
     unit = (east - west) * M_PER_LON / WIDTH  # 약도 1칸이 몇 m인지
     height = round((north - south) * M_PER_LAT / unit)
@@ -106,24 +117,49 @@ def main(place):
                     rot = rot - 180 if rot > 90 else rot + 180 if rot < -90 else rot  # 글자가 뒤집히지 않게
                     names[name] = {"len": length, "name": name, "x": round(mx, 1), "y": round(my, 1), "rot": round(rot)}
     roads.sort(key=lambda r: (r["w"], r["pts"]))
-    road_names = [{k: v for k, v in n.items() if k != "len"} for _, n in sorted(names.items())]
 
     spots = []
     for osm_id, name in cfg["spots"].items():
         x, y = xy(found[osm_id]["lat"], found[osm_id]["lon"])
         spots.append({"name": name, "x": x, "y": y})
 
-    # 실내 칸과 가게: 공식 지도 좌표를 돌리고 옮겨서 약도 좌표로 바꾼다
+    deg, dx, dy = cfg["poi_transform"]
+    cos, sin, k = math.cos(math.radians(deg)), math.sin(math.radians(deg)), 0.1 / unit
+
+    def indoor_xy(px, py):
+        return k * (cos * px - sin * py) + dx, k * (sin * px + cos * py) + dy
+
+    data = {"width": WIDTH, "height": height, "main": buildings[0]["name"], "roads": roads,
+            "roadNames": [{k: v for k, v in n.items() if k != "len"} for _, n in sorted(names.items())],
+            "blocks": blocks, "buildings": buildings, "spots": spots}
+    return data, indoor_xy
+
+
+def indoor_only(cfg):
+    """바깥 지도 없이 실내 좌표의 한 범위를 약도 너비에 맞춘다."""
+    left, top, right, bottom = cfg["frame"]
+    k = WIDTH / (right - left)
+
+    def indoor_xy(px, py):
+        return (px - left) * k, (py - top) * k
+
+    spots = [{"name": name, "x": round(indoor_xy(*at)[0], 2), "y": round(indoor_xy(*at)[1], 2)} for name, at in cfg["labels"].items()]
+    data = {"width": WIDTH, "height": round((bottom - top) * k), "roads": [], "roadNames": [], "blocks": [], "buildings": [], "spots": spots}
+    return data, indoor_xy
+
+
+def main(place):
+    cfg = PLACES[place]
+    data, indoor_xy = outdoor(cfg) if "bbox" in cfg else indoor_only(cfg)
+    spots = data["spots"]
+
     def rows(name):
         path = f"{place}/{name}"
         return [r.rstrip("\n").split("\t") for r in open(path, encoding="utf-8") if not r.startswith("#")] if os.path.exists(path) else []
 
-    deg, dx, dy = cfg.get("poi_transform", (0, 0, 0))
-    cos, sin, k = math.cos(math.radians(deg)), math.sin(math.radians(deg)), 0.1 / unit
-
     def place_xy(px, py):  # 가게 칸은 몇 m짜리라 소수 둘째 자리까지 남긴다
-        px, py = float(px), float(py)
-        return round(k * (cos * px - sin * py) + dx, 2), round(k * (sin * px + cos * py) + dy, 2)
+        x, y = indoor_xy(float(px), float(py))
+        return round(x, 2), round(y, 2)
 
     # shapes: 층 -> [[종류, 꼭짓점들], ...]. 파일에 적힌 순서(큰 것부터)대로 그려야 작은 칸이 위에 온다.
     shapes, index = {}, {}
@@ -142,7 +178,7 @@ def main(place):
     named = {(s["floor"], s["shape"]) for s in spots if "shape" in s}
     for floor, items in shapes.items():
         for i, item in enumerate(items):
-            if (floor, i) in named or item[0] in ("바닥", "기타"):
+            if (floor, i) in named or item[0] in ("바닥", "바닥면", "빈곳", "기타"):
                 continue
             if item[0] == "가게":
                 item[0] = "기타"
@@ -151,17 +187,16 @@ def main(place):
             xs, ys = [p[0] for p in pts], [p[1] for p in pts]
             spots.append({"name": item[0], "x": round((min(xs) + max(xs)) / 2, 2), "y": round((min(ys) + max(ys)) / 2, 2),
                           "floor": floor, "kind": "편의시설", "shape": i})
-    for i in buildings + spots:
-        assert 0 <= i["x"] <= WIDTH and 0 <= i["y"] <= height, f"범위 밖: {i['name']}"
+    for s in spots:
+        assert 0 <= s["x"] <= WIDTH and 0 <= s["y"] <= data["height"], f"범위 밖: {s['name']}"
 
-    data = {"width": WIDTH, "height": height, "main": buildings[0]["name"], "roads": roads, "roadNames": road_names,
-            "blocks": blocks, "buildings": buildings, "shapes": shapes, "spots": spots}
-    os.makedirs(place, exist_ok=True)
+    data["shapes"] = shapes
     with open(f"{place}/map.js", "w", encoding="utf-8") as f:
         f.write("// make_map.py가 만든 파일. 손으로 고치지 말고 make_map.py를 다시 돌린다.\n")
-        f.write("// 건물과 길: © OpenStreetMap contributors (ODbL). 가게 위치: poi.tsv 참고.\n")
+        f.write("// 건물과 길: © OpenStreetMap contributors (ODbL). 실내: shapes.tsv, poi.tsv 참고.\n")
         f.write("const MAP = " + json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace('},{', '},\n{') + ";\n")
-    print(f"{place}/map.js 저장: 건물 {len(buildings)}+{len(blocks)}개, 길 {len(roads)}개, 지점 {len(spots)}개, 크기 {WIDTH}x{height}")
+    print(f"{place}/map.js 저장: 건물 {len(data['buildings'])}+{len(data['blocks'])}개, 길 {len(data['roads'])}개, "
+          f"칸 {sum(map(len, shapes.values()))}개, 지점 {len(spots)}개, 크기 {WIDTH}x{data['height']}")
 
 
 if __name__ == "__main__":

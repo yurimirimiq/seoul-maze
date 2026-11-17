@@ -49,14 +49,16 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 70
 
 /* 약도: 밝은 회색 바탕에 흰 길, 옅은 건물. 색은 가게 점과 출구, 고른 곳에만 쓴다 */
 .mapwrap { position: relative; }
-.mapscroll { overflow: auto; overscroll-behavior: contain; touch-action: pan-x pan-y; /* 두 손가락 확대는 app.js가 맡는다 */ border: 1px solid var(--rule); border-radius: 12px; background: var(--map); }
+.mapscroll { display: grid; align-content: safe center; overflow: auto; overscroll-behavior: contain; touch-action: pan-x pan-y; /* 두 손가락 확대는 app.js가 맡는다 */ border: 1px solid var(--rule); border-radius: 12px; background: var(--map); }
 #map { display: block; width: 100%; -webkit-user-select: none; user-select: none; }
 #map .road { fill: none; stroke: #fff; stroke-linecap: round; stroke-linejoin: round; }
 #map .road.big { stroke: #fff6d6; }
 #map polygon { fill: var(--bldg); stroke: #cfd5e2; stroke-width: .15; }
 #map polygon.block { fill: #e9ebf0; stroke: none; }
 /* 실내: 흰 바닥 위에 가게 칸. 칸 사이 흰 곳이 통로로 보인다 */
-#map .ground { fill: #fff; stroke: #fff; stroke-width: 4.5; stroke-linejoin: round; } /* 테두리 굵기 = 메울 통로 너비(약 30m) */
+#map .halo { fill: #fff; stroke: #fff; stroke-width: 4.5; stroke-linejoin: round; } /* 바닥 자료가 없을 때 까는 흰 바탕. 테두리 굵기 = 메울 통로 너비(약 30m) */
+#map .rooms .ground { fill: #fff; stroke: #d5d9e2; stroke-width: .08; } /* 자료에 있는 진짜 바닥 */
+#map .rooms .void { fill: var(--map); stroke: none; } /* 뚫린 곳 */
 #map .rooms polygon { fill: color-mix(in srgb, var(--tint) 20%, #fff); stroke: #fff; stroke-width: .08; stroke-linejoin: round; }
 #map .rooms .etc { fill: #eef0f3; }
 #map .rooms .wall { fill: #c9cedb; stroke: none; }
@@ -87,9 +89,9 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 70
 /* 층 버튼: 엘리베이터처럼 위층이 위에 */
 .floors, .zoom { position: absolute; right: 8px; display: flex; flex-direction: column; overflow: hidden;
   border: 1px solid var(--rule); border-radius: 8px; background: #fff; }
-.floors { top: 8px; }
+.floors { top: 8px; max-height: calc(100% - 7.5rem); overflow-y: auto; scrollbar-width: none; } /* 층이 많으면 버튼 목록만 따로 넘긴다 */
 .zoom { bottom: 8px; }
-.mapwrap button { width: 2.5rem; height: 2.5rem; border: 0; border-top: 1px solid var(--rule); font: inherit; font-size: .875rem; font-weight: 600; color: var(--ink); background: none; }
+.mapwrap button { flex: none; width: 2.5rem; height: 2.5rem; border: 0; border-top: 1px solid var(--rule); font: inherit; font-size: .875rem; font-weight: 600; color: var(--ink); background: none; }
 .mapwrap button:first-child { border-top: 0; }
 .mapwrap button[aria-pressed="true"] { color: #fff; background: var(--ink); }
 .mapwrap button:disabled { color: var(--rule); }

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="style.css">
+<title>잠실역 | 패스파인더</title>
+</head>
+<body>
+<a class="brand wordmark" href="./" aria-label="패스파인더 홈">pathf<span class="i">ı</span>nder</a>
+<h1>잠실역</h1>
+
+<div class="mapwrap">
+  <div id="mapscroll" class="mapscroll"><svg id="map" role="img" aria-label="잠실역 롯데백화점과 롯데월드몰 실내 약도"></svg></div>
+  <div id="floors" class="floors" role="group" aria-label="층 선택"></div>
+  <div class="zoom" role="group" aria-label="약도 크기">
+    <button aria-label="약도 키우기">+</button>
+    <button aria-label="약도 줄이기">−</button>
+  </div>
+</div>
+<p class="caption">왼쪽이 롯데백화점, 오른쪽이 롯데월드몰, 오른쪽 위가 캐슬플라자예요. 색칠된 칸이 가게, 그 사이 흰 곳이 통로예요. 건물 사이 거리는 실제보다 벌어져 있어요. 약도를 키울수록 이름이 더 나오고, 아래 목록에서 가게를 누르면 그 자리가 빨갛게 표시돼요.</p>
+
+<section id="floor"></section>
+
+<footer>
+  가게 목록과 자리, 통로 모양은 2026-11-17에 <a href="https://www.lwt.co.kr/ko/about/store-map.do">롯데월드타워·몰 빠른길찾기</a>에서 확인한 내용이에요. 바뀔 수 있으니 가기 전에 공식 안내를 확인하세요.
+</footer>
+
+<script src="jamsil/map.js"></script>
+<script src="jamsil/floors.js"></script>
+<script src="jamsil/stores.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
