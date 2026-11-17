@@ -57,12 +57,13 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 70
 #map polygon.block { fill: #e9ebf0; stroke: none; }
 /* 실내: 흰 바닥 위에 가게 칸. 칸 사이 흰 곳이 통로로 보인다 */
 #map .ground { fill: #fff; stroke: #fff; stroke-width: 4.5; stroke-linejoin: round; } /* 테두리 굵기 = 메울 통로 너비(약 30m) */
-#map .rooms polygon { --tint: #8f86c4; fill: color-mix(in srgb, var(--tint) 20%, #fff); stroke: #fff; stroke-width: .1; stroke-linejoin: round; }
+#map .rooms polygon { fill: color-mix(in srgb, var(--tint) 20%, #fff); stroke: #fff; stroke-width: .08; stroke-linejoin: round; }
 #map .rooms .etc { fill: #eef0f3; }
 #map .rooms .wall { fill: #c9cedb; stroke: none; }
 #map .rooms .on { fill: var(--here); }
 /* 자간은 0으로 되돌린다. 본문의 자간이 약도 좌표 단위로 넘어오면 글자가 겹친다 */
-#map text { letter-spacing: 0; font-size: calc(3px / var(--z, 1)); font-weight: 500; fill: var(--ink); paint-order: stroke; stroke: var(--map); stroke-width: calc(.9px / var(--z, 1)); }
+/* --u = 화면 1px이 약도 좌표로 얼마인지(app.js가 넣는다). 글자는 약도를 키우든 화면이 넓든 늘 11px로 보인다 */
+#map text { letter-spacing: 0; font-size: calc(var(--u, .293) * 11px); font-weight: 500; fill: var(--ink); paint-order: stroke; stroke: var(--map); stroke-width: calc(var(--u, .293) * 3px); }
 #map text.bname { text-anchor: middle; dominant-baseline: central; font-weight: 600; fill: #9aa2b8; }
 #map text.roadname { text-anchor: middle; dominant-baseline: central; fill: #a3a9b8; stroke: none; }
 #map text.spotname { dominant-baseline: central; }
@@ -71,16 +72,16 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 70
 #map text.spotname.on { fill: var(--ink); font-weight: 700; }
 #map text.fixed { text-anchor: middle; font-size: 3px; font-weight: 600; stroke-width: .9px; }
 #map text.sign { text-anchor: middle; font-size: 2.8px; font-weight: 600; fill: var(--line-ink, var(--ink)); stroke: none; }
-/* 점과 표지판은 약도를 키워도 화면에서 같은 크기로 남는다 */
-#map .spot, #map .keep { transform-box: fill-box; transform-origin: center; transform: scale(calc(1 / var(--z, 1))); }
+/* 점과 표지판도 화면에서 같은 크기로 남는다. .293은 표지판을 그릴 때 기준으로 삼은 폰 화면의 --u 값이다 */
+#map .spot, #map .keep { transform-box: fill-box; transform-origin: center; transform: scale(calc(var(--u, .293) / .293)); }
 #map .spot { stroke: #fff; stroke-width: .3; }
 #map .spot.on { fill: var(--here); }
 #map .exit { fill: var(--exit); stroke: none; }
 #map circle.line { fill: var(--line); }
 #pin { fill: var(--here); stroke: #fff; stroke-width: .8; }
-#ping { fill: none; stroke: var(--here); stroke-width: .6; transform-box: fill-box; transform-origin: center; transform: scale(calc(1 / var(--z, 1))); }
+#ping { fill: none; stroke: var(--here); stroke-width: .6; transform-box: fill-box; transform-origin: center; transform: scale(calc(var(--u, .293) / .293)); }
 #ping.go { animation: ping .9s ease-out; }
-@keyframes ping { from { opacity: 1; } to { transform: scale(calc(4 / var(--z, 1))); opacity: 0; } }
+@keyframes ping { from { opacity: 1; } to { transform: scale(calc(4 * var(--u, .293) / .293)); opacity: 0; } }
 .caption { margin: 8px 0 0; font-size: .8125rem; color: var(--muted); }
 
 /* 층 버튼: 엘리베이터처럼 위층이 위에 */

@@ -12,7 +12,9 @@ console.assert(overlaps({ x: 0, y: 0, w: 10, h: 10 }, { x: 9, y: 9, w: 5, h: 5 }
 // 가게 종류별 점 색. 종류 이름은 stores.js와 poi.tsv에 적힌 그대로다. 앞에 있을수록 이름표가 먼저 나온다.
 const KINDS = {
   '엔터테인먼트': '#7c5cd6', '서비스': '#5b6b85', '라이프스타일': '#2f9a6a', '패션의류': '#3d7fd0', '레스토랑&카페': '#ef8a2b',
-  '패션잡화': '#5a66cf', '뷰티': '#dc5a9a', '홈퍼니싱': '#9a7440', '키즈': '#d9a514', '편의시설': '#9aa3b5',
+  '패션잡화': '#5a66cf', '뷰티': '#dc5a9a', '홈퍼니싱': '#9a7440', '키즈': '#d9a514',
+  '가게': '#8f86c4', // 공식 매장 목록에는 없고 지도에만 이름이 있는 곳
+  '편의시설': '#9aa3b5',
 };
 // 역 이름 -> 노선 번호. 새 장소를 넣을 때 그 장소의 역을 여기에 더한다. 노선 색은 style.css에 있다.
 const LINES = { '삼성역': '2', '봉은사역': '9' };
@@ -31,7 +33,7 @@ for (const pts of MAP.blocks) el('polygon', { points: pts, class: 'block' });
 for (const b of MAP.buildings) el('polygon', { points: b.pts });
 // 실내: 층마다 흰 바닥 위에 가게 칸을 얹는다. 칸 사이에 남는 흰 곳이 통로다. 고른 층 것만 보인다.
 // 자료에 바닥 모양은 없고 벽 조각만 있어서, 모든 칸을 굵은 흰 테두리로 한 번 깔아 통로까지 하얗게 메운다.
-// 칸은 가게 종류 색을 옅게 칠한다(--tint). 종류를 모르는 가게는 style.css의 기본색, 화장실 같은 시설은 회색이다.
+// 칸은 가게 종류 색을 옅게 칠한다(--tint). 화장실 같은 시설 칸은 편의시설 색(회색)이다.
 const rooms = {};
 for (const [id, list] of Object.entries(MAP.shapes || {})) {
   const g = el('g', { class: 'floorplan' });
@@ -39,8 +41,7 @@ for (const [id, list] of Object.entries(MAP.shapes || {})) {
   rooms[id] = el('g', { class: 'rooms' }, '', g);
   for (const [kind, pts] of list) {
     const room = el('polygon', { points: pts, class: { '바닥': 'wall', '기타': 'etc' }[kind] || '' }, '', rooms[id]);
-    const tint = KINDS[kind] || (kind !== '가게' && KINDS['편의시설']);
-    if (tint) room.style.setProperty('--tint', tint);
+    room.style.setProperty('--tint', KINDS[kind] || KINDS['편의시설']);
   }
 }
 for (const n of MAP.roadNames) el('text', { x: n.x, y: n.y, class: 'roadname', transform: `rotate(${n.rot} ${n.x} ${n.y})` }, n.name);
@@ -89,28 +90,31 @@ const add = (parent, tag, text, cls) => {
 const scroller = document.getElementById('mapscroll');
 const [zoomIn, zoomOut] = document.querySelectorAll('.zoom button');
 scroller.style.aspectRatio = `${MAP.width} / ${MAP.height}`;
-const MAX_ZOOM = 8;
+const MAX_ZOOM = 16;
 let zoom = 1, floor, picked = [];
 
 // 지금 층의 가게 이름표 가운데 서로 겹치지 않는 것만 보여 준다. 키울수록 더 많이 보인다.
 const relabel = () => {
   const px = svg.clientWidth / MAP.width; // 약도 1칸이 화면에서 몇 px인지
-  const font = 3 * px / zoom;             // 글자 크기는 키워도 그대로다
+  const font = 11;                        // style.css의 약도 글자 크기(px)와 같아야 한다
+  svg.style.setProperty('--u', 1 / px);   // 글자, 점, 표지판을 약도 크기와 상관없이 화면에서 같은 크기로 그리게 한다
   const width = name => [...name].reduce((w, ch) => w + (ch.charCodeAt(0) < 128 ? .6 : 1), 0) * font;
   const kept = signs.map(g => ({ x: g.x * px - width(g.name) / 2, y: g.y * px - font * .7, w: width(g.name), h: font * 1.4 }));
-  // 편의시설 이름은 목록에서 골랐을 때만 보인다. 늘 보이면 가게 이름과 섞여 어지럽다.
-  const shown = s => s.floor === floor && (s.kind !== '편의시설' || picked.includes(s));
+  // 칸이 없어 점으로만 찍히는 편의시설은 목록에서 골랐을 때만 보인다. 늘 보이면 어지럽다.
+  const shown = s => s.floor === floor && (s.room || s.kind !== '편의시설' || picked.includes(s));
   for (const s of stores) {
     s.label.style.display = 'none';
     if (s.dot) s.dot.style.display = shown(s) ? '' : 'none';
   }
   for (const s of [...picked.filter(shown), ...stores.filter(s => shown(s) && !picked.includes(s))]) {
     // 이름이 차지할 자리에 숨 쉴 틈을 조금 둔다. 칸이 있는 가게는 가운데 정렬, 점만 있는 곳은 점 오른쪽.
-    const w = width(s.name) + font * (s.room ? .8 : 1.6);
-    const box = { x: s.x * px - (s.room ? w / 2 : 0), y: s.y * px - font * .9, w, h: font * 1.8 };
-    const show = picked.includes(s) || !kept.some(k => overlaps(k, box));
+    const w = width(s.name) + font * (s.room ? .4 : 1.4);
+    const box = { x: s.x * px - (s.room ? w / 2 : 0), y: s.y * px - font * .65, w, h: font * 1.3 };
+    // 끝까지 키웠을 때는 겹치더라도 이름을 다 보여 준다. 같은 이름끼리 겹친 것(위아래 에스컬레이터 쌍)만 하나로 둔다.
+    const hit = kept.find(k => overlaps(k, box));
+    const show = picked.includes(s) || !hit || (zoom === MAX_ZOOM && hit.name !== s.name);
     s.label.style.display = show ? '' : 'none';
-    if (show) kept.push(box);
+    if (show) kept.push({ ...box, name: s.name });
   }
 };
 // at: 그 자리가 움직이지 않게 키울 화면 위치(스크롤 상자 기준). 안 주면 가운데.
@@ -118,7 +122,6 @@ const setZoom = (z, at = { x: scroller.clientWidth / 2, y: scroller.clientHeight
   const mx = (scroller.scrollLeft + at.x) / zoom, my = (scroller.scrollTop + at.y) / zoom;
   zoom = Math.min(MAX_ZOOM, Math.max(1, z));
   svg.style.width = zoom * 100 + '%';
-  svg.style.setProperty('--z', zoom); // 글자와 점은 약도가 커져도 같은 크기로 남는다
   scroller.scrollTo(mx * zoom - at.x, my * zoom - at.y);
   zoomIn.disabled = zoom === MAX_ZOOM;
   zoomOut.disabled = zoom === 1;

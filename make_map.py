@@ -138,6 +138,19 @@ def main(place):
             if shapes[floor][spot["shape"]][0] == "가게":
                 shapes[floor][spot["shape"]][0] = kind  # 칸을 가게 종류 색으로 칠할 수 있게
         spots.append(spot)
+    # 이름이 안 붙은 칸 정리: 시설 칸(에스컬레이터 등)은 종류 이름을 가운데에 붙이고, 가게 칸은 빈 매장으로 보고 회색으로 돌린다
+    named = {(s["floor"], s["shape"]) for s in spots if "shape" in s}
+    for floor, items in shapes.items():
+        for i, item in enumerate(items):
+            if (floor, i) in named or item[0] in ("바닥", "기타"):
+                continue
+            if item[0] == "가게":
+                item[0] = "기타"
+                continue
+            pts = [tuple(map(float, p.split(","))) for p in item[1].split()]
+            xs, ys = [p[0] for p in pts], [p[1] for p in pts]
+            spots.append({"name": item[0], "x": round((min(xs) + max(xs)) / 2, 2), "y": round((min(ys) + max(ys)) / 2, 2),
+                          "floor": floor, "kind": "편의시설", "shape": i})
     for i in buildings + spots:
         assert 0 <= i["x"] <= WIDTH and 0 <= i["y"] <= height, f"범위 밖: {i['name']}"
 
