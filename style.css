@@ -119,6 +119,14 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 70
   border: 1px solid var(--rule); border-radius: 8px; background: #fff; }
 .floors { top: 8px; max-height: calc(100% - 7.5rem); overflow-y: auto; scrollbar-width: none; } /* 층이 많으면 버튼 목록만 따로 넘긴다 */
 .zoom { bottom: 8px; }
+/* 손가락으로 쓰는 기기에서는 두 손가락으로 키우므로 +, − 버튼을 숨긴다. 마우스와 키보드로 쓸 때는 남겨 둔다 */
+@media (pointer: coarse) { .zoom { display: none; } .floors { max-height: calc(100% - 1rem); } }
+/* 약도를 누르면 화면 가득 약도만 보인다. 닫기 버튼은 왼쪽 위, 돋보기는 그 옆 */
+.close { position: absolute; top: 8px; left: 8px; width: 2.5rem; height: 2.5rem; border: 1px solid var(--rule); border-radius: 8px; font: inherit; font-size: 1.25rem; line-height: 1; color: var(--ink); background: #fff; }
+.mapwrap.full { position: fixed; inset: 0; z-index: 10; background: var(--map); }
+.mapwrap.full .mapscroll { height: 100%; min-height: 0; border: 0; border-radius: 0; }
+.mapwrap.full .search { left: calc(8px + 2.5rem + 6px); }
+body:has(.mapwrap.full) { overflow: hidden; }
 :is(.floors, .zoom) button { flex: none; width: 2.5rem; height: 2.5rem; border: 0; border-top: 1px solid var(--rule); font: inherit; font-size: .875rem; font-weight: 600; color: var(--ink); background: none; }
 :is(.floors, .zoom) button:first-child { border-top: 0; }
 :is(.floors, .zoom) button[aria-pressed="true"] { color: #fff; background: var(--ink); }

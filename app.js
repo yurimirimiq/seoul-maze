@@ -192,7 +192,9 @@ scroller.addEventListener('touchmove', e => {
 }, { passive: false });
 scroller.addEventListener('touchend', () => { pinch = null; commit(); });
 // 마우스로는 끌어서 옮긴다. 손가락 하나로 끄는 것은 브라우저가 알아서 옮겨 준다.
+let downAt = [0, 0]; // 누르기 시작한 자리. 끌어서 옮긴 것과 그냥 한 번 누른 것을 가린다
 scroller.addEventListener('pointerdown', e => {
+  downAt = [e.clientX, e.clientY];
   if (e.pointerType !== 'mouse') return;
   const move = m => scroller.scrollBy(-m.movementX, -m.movementY);
   scroller.addEventListener('pointermove', move);
@@ -288,6 +290,28 @@ setFloor((FLOORS.find(f => f.start) || FLOORS[0]).id);
 setZoom(0); // 볼 자리를 덮는 크기로 시작해서 약도 가운데를 보여 준다
 scroller.scrollTo((svg.clientWidth - scroller.clientWidth) / 2, (svg.clientHeight - scroller.clientHeight) / 2);
 addEventListener('resize', () => setZoom(zoom)); // 화면 크기가 바뀌면 덮는 크기도 바뀐다
+
+// 약도를 한 번 누르면 화면 가득 약도만 보여 준다. 주소 끝에 #map을 붙여 두어서 폰의 뒤로 가기로도 돌아온다.
+const wrap = scroller.parentNode, closeMap = wrap.querySelector('.close');
+if (closeMap) { // 폰에 옛 화면 파일이 남아 있으면 닫기 버튼이 없다. 그때는 이 기능만 건너뛴다
+  const showFull = () => {
+    const on = location.hash === '#map';
+    const cx = (scroller.scrollLeft + scroller.clientWidth / 2) / svg.clientWidth, cy = (scroller.scrollTop + scroller.clientHeight / 2) / svg.clientHeight; // 보던 자리
+    wrap.classList.toggle('full', on);
+    closeMap.hidden = !on;
+    setZoom(zoom); // 볼 자리 크기가 바뀌었으니 덮는 크기를 다시 맞춘다
+    scroller.scrollTo(cx * svg.clientWidth - scroller.clientWidth / 2, cy * svg.clientHeight - scroller.clientHeight / 2);
+  };
+  addEventListener('popstate', showFull);
+  scroller.addEventListener('click', e => {
+    if (wrap.classList.contains('full') || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return; // 끌어서 옮긴 것은 누른 것이 아니다
+    history.pushState({ full: true }, '', '#map');
+    showFull();
+  });
+  // 이 화면에서 연 것이면 뒤로 가기로 닫고, 주소로 바로 들어온 것이면 뒤로 갈 곳이 없으니 주소만 고친다
+  closeMap.onclick = () => history.state?.full ? history.back() : (history.replaceState(null, '', location.pathname), showFull());
+  if (location.hash === '#map') showFull();
+}
 
 // 행사 목록. 행사 자료(EVENTS)가 없는 장소는 건너뛴다.
 const today = new Date().toLocaleDateString('sv'); // 'sv' 형식 = 내 시간대 기준 YYYY-MM-DD
