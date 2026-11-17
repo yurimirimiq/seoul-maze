@@ -1,7 +1,7 @@
 """서울고속버스터미널(경부선 쪽 건물) 공식 층별 안내에서 가게 번호·이름과 안내 그림을 받아
 gosok/terminal.shapes.tsv, terminal.poi.tsv, terminal.js를 만든다.
 
-쓰는 법: python3 make_terminal.py   (그다음 python3 make_map.py gosok)
+쓰는 법: python3 tools/make_terminal.py   (그다음 python3 tools/make_map.py gosok)
 맥에서만 돈다. 그림 읽기와 글자 읽기는 make_shinsegae.py의 것을 그대로 쓴다.
 
 공식 사이트(exterminal.co.kr)의 층별 안내는 층마다 번호가 찍힌 작은 약도 그림(626x422)과 "번호, 이름, 전화" 목록으로 되어 있다.

@@ -1,6 +1,6 @@
 """스타필드 공식 층별 안내에서 매장 이름을 받아 <장소>/stores.js를 만든다.
 
-쓰는 법: python3 make_stores.py coex
+쓰는 법: python3 tools/make_stores.py coex
 매장이 바뀌었을 때 다시 돌리면 된다. 이름과 종류만 가져오고 전화번호, 사진, 도면은 가져오지 않는다.
 """
 import datetime
@@ -58,5 +58,5 @@ def main(place):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2 or sys.argv[1] not in PLACES:
-        sys.exit(f"쓰는 법: python3 make_stores.py <장소>\n장소: {', '.join(PLACES)}")
+        sys.exit(f"쓰는 법: python3 tools/make_stores.py <장소>\n장소: {', '.join(PLACES)}")
     main(sys.argv[1])

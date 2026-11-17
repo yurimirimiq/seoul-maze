@@ -6,51 +6,51 @@
 
 ## 1. 표지
 
-![1장: 표지](docs/deck/01.jpg)
+![1장: 표지](deck/01.jpg)
 
 ## 2. 문제
 
-![2장: 문제](docs/deck/02.jpg)
+![2장: 문제](deck/02.jpg)
 
 ## 3. 원인
 
-![3장: 원인](docs/deck/03.jpg)
+![3장: 원인](deck/03.jpg)
 
 ## 4. 해결
 
-![4장: 해결](docs/deck/04.jpg)
+![4장: 해결](deck/04.jpg)
 
 ## 5. 제품
 
-![5장: 제품](docs/deck/05.jpg)
+![5장: 제품](deck/05.jpg)
 
 ## 6. 현황
 
-![6장: 현황](docs/deck/06.jpg)
+![6장: 현황](deck/06.jpg)
 
 ## 7. 만드는 방식
 
-![7장: 만드는 방식](docs/deck/07.jpg)
+![7장: 만드는 방식](deck/07.jpg)
 
 ## 8. 다음 단계
 
-![8장: 다음 단계](docs/deck/08.jpg)
+![8장: 다음 단계](deck/08.jpg)
 
 ## 9. 수익 모델
 
-![9장: 수익 모델](docs/deck/09.jpg)
+![9장: 수익 모델](deck/09.jpg)
 
 ## 10. 팀
 
-![10장: 팀](docs/deck/10.jpg)
+![10장: 팀](deck/10.jpg)
 
 ## 11. 필요한 것
 
-![11장: 필요한 것](docs/deck/11.jpg)
+![11장: 필요한 것](deck/11.jpg)
 
 ## 12. 마무리
 
-![12장: 마무리](docs/deck/12.jpg)
+![12장: 마무리](deck/12.jpg)
 
 ---
 

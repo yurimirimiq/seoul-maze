@@ -1,6 +1,6 @@
 """한 장소의 약도 데이터 <장소>/map.js를 만든다.
 
-쓰는 법: python3 make_map.py coex
+쓰는 법: python3 tools/make_map.py coex
 새 장소 추가: 아래 PLACES에 항목을 하나 더 넣는다.
 
 - 바깥 지도(건물, 길, 지하철 출구): 오픈스트리트맵에서 받는다. © OpenStreetMap contributors (ODbL)
@@ -252,5 +252,5 @@ def main(place):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2 or sys.argv[1] not in PLACES:
-        sys.exit(f"쓰는 법: python3 make_map.py <장소>\n장소: {', '.join(PLACES)}")
+        sys.exit(f"쓰는 법: python3 tools/make_map.py <장소>\n장소: {', '.join(PLACES)}")
     main(sys.argv[1])

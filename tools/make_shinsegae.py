@@ -1,6 +1,6 @@
 """신세계백화점 강남점 층 안내도 그림에서 매장 칸과 이름을 읽어 gosok/shinsegae.shapes.tsv, shinsegae.poi.tsv를 만든다.
 
-쓰는 법: python3 make_shinsegae.py <그림 폴더>   (그다음 python3 make_map.py gosok)
+쓰는 법: python3 tools/make_shinsegae.py <그림 폴더>   (그다음 python3 tools/make_map.py gosok)
 그림 폴더에는 신세계백화점 공식 층별 안내의 "층 안내도" 그림(2000x1500)을 층 이름으로 넣는다: 11.png, 10.png, ... 1M.png, 1.png, B1.png
 B1-detail.png도 넣는다: 지하 1층 "스위트 파크" 탭의 그림(스위트 파크와 하우스오브신세계 쪽 확대도). 지하 1층 그림에서 글자가 작아 못 읽는 매장 이름을 여기서 읽는다.
 
@@ -321,5 +321,5 @@ def main(folder):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2 or not os.path.isdir(sys.argv[1]):
-        sys.exit("쓰는 법: python3 make_shinsegae.py <층 안내도 그림 폴더>")
+        sys.exit("쓰는 법: python3 tools/make_shinsegae.py <층 안내도 그림 폴더>")
     main(sys.argv[1])

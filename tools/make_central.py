@@ -1,6 +1,6 @@
 """공공데이터(소상공인시장진흥공단 상가(상권)정보)에서 센트럴시티와 파미에스테이션의 가게 이름과 층을 뽑아 gosok/central.js를 만든다.
 
-쓰는 법: python3 make_central.py <받은 zip 파일>
+쓰는 법: python3 tools/make_central.py <받은 zip 파일>
 zip은 공공데이터포털의 '소상공인시장진흥공단_상가(상권)정보'(https://www.data.go.kr/data/15083033/fileData.do)에서 받는다.
 이용허락범위 제한이 없는 자료이고 330MB쯤이다. 저장소에는 넣지 않는다.
 
@@ -90,5 +90,5 @@ def main(path):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        sys.exit("쓰는 법: python3 make_central.py <소상공인시장진흥공단 상가(상권)정보 zip 파일>")
+        sys.exit("쓰는 법: python3 tools/make_central.py <소상공인시장진흥공단 상가(상권)정보 zip 파일>")
     main(sys.argv[1])

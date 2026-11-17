@@ -1,6 +1,6 @@
 """고속터미널 지하상가(고투몰)의 가게 칸 배치를 gosok/shapes.tsv, gosok/poi.tsv로 만든다.
 
-쓰는 법: python3 make_gotomall.py  (그다음 python3 make_map.py gosok). gosok/shapes.tsv, poi.tsv, paths.tsv를 만든다.
+쓰는 법: python3 tools/make_gotomall.py  (그다음 python3 tools/make_map.py gosok). gosok/shapes.tsv, poi.tsv, paths.tsv를 만든다.
 
 근거: 서울시설공단이 공개한 "터미널 지하도상가 배치도" 1~3구역 그림을 보고, 줄마다 몇 번 칸부터 몇 번 칸까지가
 어디서 어디까지 놓였는지를 손으로 옮겨 적었다. 그림을 그대로 쓰지 않고 칸 번호와 순서만 가져와 새로 그린다.
