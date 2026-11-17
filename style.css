@@ -6,9 +6,9 @@
   --rule: #d5d9e2;
   --exit: #ffd400;
   --here: #e5342b;
-  --map: #f9fafb;
-  --bldg: #e6e9ef;
-  --bldg-main: #d3dae8;
+  --map: #f4f5f7;
+  --bldg: #e2e6ee;
+  --bldg-main: #e6e2f2;
   --date-col: 4.25rem;
 }
 /* 지하철 노선 색. 글자색은 노선 색 위에서 읽히는 쪽으로 고른다. */
@@ -48,24 +48,29 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 60
 .lines .line { display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%; font-size: .875rem; font-weight: 600;
   color: var(--line-ink, var(--ink)); background: var(--line); }
 
-/* 약도: 밝은 바탕에 옅은 건물, 글자와 점만 남색 */
+/* 약도: 밝은 회색 바탕에 흰 길, 옅은 건물. 색은 가게 점과 출구, 고른 곳에만 쓴다 */
 .mapwrap { position: relative; }
-.mapscroll { overflow: auto; overscroll-behavior: contain; border: 1px solid var(--rule); border-radius: 8px; background: var(--map); }
+.mapscroll { overflow: auto; overscroll-behavior: contain; border: 1px solid var(--rule); border-radius: 12px; background: var(--map); }
 #map { display: block; width: 100%; }
-#map polygon { fill: var(--bldg); }
+#map .road { fill: none; stroke: #fff; stroke-linecap: round; stroke-linejoin: round; }
+#map .road.big { stroke: #fff6d6; }
+#map polygon { fill: var(--bldg); stroke: #cfd5e2; stroke-width: .15; }
+#map polygon.block { fill: #e9ebf0; stroke: none; }
 #map polygon.main { fill: var(--bldg-main); }
-#map text { font-size: calc(3px / var(--z, 1)); font-weight: 600; text-anchor: middle; fill: var(--ink); paint-order: stroke; stroke: var(--map); stroke-width: calc(.9px / var(--z, 1)); }
-#map text.fixed { font-size: 3px; stroke-width: .9px; }
-#map text.spotname { display: none; text-anchor: start; dominant-baseline: central; font-weight: 500; }
-#map.near text.spotname { display: inline; }
-#map.near #pinname { display: none; } /* 키운 약도에서는 가게 이름이 이미 보인다 */
+#map text { font-size: calc(3px / var(--z, 1)); font-weight: 500; fill: var(--ink); paint-order: stroke; stroke: var(--map); stroke-width: calc(.9px / var(--z, 1)); }
+#map text.bname { text-anchor: middle; dominant-baseline: central; font-weight: 600; fill: #8a93ab; }
+#map text.roadname { text-anchor: middle; dominant-baseline: central; fill: #a3a9b8; stroke: none; }
+#map text.spotname { dominant-baseline: central; }
+#map text.spotname.minor { fill: var(--muted); font-weight: 400; }
+#map text.spotname.on { fill: var(--here); font-weight: 600; }
+#map text.fixed { text-anchor: middle; font-size: 3px; font-weight: 600; stroke-width: .9px; }
+#map text.sign { text-anchor: middle; font-size: 2.8px; font-weight: 600; fill: var(--line-ink, var(--ink)); stroke: none; }
 /* 점과 표지판은 약도를 키워도 화면에서 같은 크기로 남는다 */
 #map .spot, #map .keep { transform-box: fill-box; transform-origin: center; transform: scale(calc(1 / var(--z, 1))); }
-#map .spot { fill: var(--ink); stroke: var(--map); stroke-width: .4; }
-#map .exit { fill: var(--exit); }
+#map .spot { stroke: #fff; stroke-width: .3; }
+#map .spot.on { fill: var(--here); }
+#map .exit { fill: var(--exit); stroke: none; }
 #map circle.line { fill: var(--line); }
-#map text.sign { fill: var(--line-ink, var(--ink)); stroke: none; font-size: 2.8px; }
-#map .north, #map .north text { fill: var(--muted); stroke: none; font-size: 2.6px; }
 #pin { fill: var(--here); stroke: #fff; stroke-width: .8; }
 #ping { fill: none; stroke: var(--here); stroke-width: .6; transform-box: fill-box; transform-origin: center; transform: scale(calc(1 / var(--z, 1))); }
 #ping.go { animation: ping .9s ease-out; }
@@ -96,14 +101,16 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 60
 #floor h3 { margin: 24px 0 0; padding-bottom: 8px; font-size: .9375rem; font-weight: 600; border-bottom: 1px solid var(--ink); }
 #floor details { border-bottom: 1px solid var(--rule); }
 #floor summary { display: flex; align-items: center; gap: 8px; padding: 12px 8px; font-weight: 500; list-style: none; cursor: pointer; }
+#floor summary i { width: .625rem; height: .625rem; border-radius: 50%; } /* 약도의 점과 같은 색 */
 #floor summary::-webkit-details-marker { display: none; }
 #floor summary small { font-size: .8125rem; font-weight: 400; color: var(--muted); }
 #floor summary::after { content: '+'; margin-left: auto; font-size: 1.125rem; line-height: 1; color: var(--muted); }
 #floor details[open] summary::after { content: '−'; }
 .cols { columns: 2; column-gap: 16px; padding: 0 8px 14px; font-size: .875rem; }
 .cols li { break-inside: avoid; padding: 3px 0; }
-.cols button { padding: 0; border: 0; font: inherit; font-weight: 600; text-align: left; text-decoration: underline; text-underline-offset: 3px; color: var(--ink); background: none; }
-.cols button[aria-pressed="true"] { color: var(--here); }
+.cols button { padding: 0; border: 0; font: inherit; text-align: left; color: var(--ink); background: none; }
+.cols button small { color: var(--muted); }
+.cols button[aria-pressed="true"] { font-weight: 600; color: var(--here); }
 
 /* 행사 시간표 */
 .events li { border-bottom: 1px solid var(--rule); border-left: 4px solid transparent; padding-bottom: 10px; }
