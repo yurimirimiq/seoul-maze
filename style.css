@@ -51,7 +51,7 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 70
 /* 약도: 밝은 회색 바탕에 흰 길, 옅은 건물. 색은 가게 점과 출구, 고른 곳에만 쓴다 */
 .mapwrap { position: relative; }
 .mapscroll { overflow: auto; overscroll-behavior: contain; touch-action: pan-x pan-y; /* 두 손가락 확대는 app.js가 맡는다 */ border: 1px solid var(--rule); border-radius: 12px; background: var(--map); }
-#map { display: block; width: 100%; }
+#map { display: block; width: 100%; -webkit-user-select: none; user-select: none; }
 #map .road { fill: none; stroke: #fff; stroke-linecap: round; stroke-linejoin: round; }
 #map .road.big { stroke: #fff6d6; }
 #map polygon { fill: var(--bldg); stroke: #cfd5e2; stroke-width: .15; }

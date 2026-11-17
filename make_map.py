@@ -10,6 +10,8 @@ import json
 import math
 import os
 import sys
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -64,7 +66,14 @@ def main(place):
         "https://overpass-api.de/api/interpreter",
         data=urllib.parse.urlencode({"data": query}).encode(),
         headers={"User-Agent": "make_map.py"})
-    elements = json.load(urllib.request.urlopen(req, timeout=90))["elements"]
+    for attempt in range(4):  # 지도 서버가 502, 504를 자주 내서 몇 번 다시 해 본다
+        try:
+            elements = json.load(urllib.request.urlopen(req, timeout=90))["elements"]
+            break
+        except urllib.error.HTTPError as e:
+            if e.code < 500 or attempt == 3:
+                raise
+            time.sleep(10)
     found = {e["id"]: e for e in elements}
     missing = (set(cfg["buildings"]) | set(cfg["spots"])) - set(found)
     assert not missing, f"OSM에서 못 찾은 id: {missing}"

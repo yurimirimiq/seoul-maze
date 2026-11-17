@@ -39,9 +39,10 @@ for (const [id, d] of Object.entries(MAP.paths || {})) {
 for (const n of MAP.roadNames) el('text', { x: n.x, y: n.y, class: 'roadname', transform: `rotate(${n.rot} ${n.x} ${n.y})` }, n.name);
 
 const signs = []; // 늘 보이는 것들이 차지한 자리. 가게 이름표가 이 위에 겹치지 않게 한다.
-const stores = MAP.spots.filter(s => s.floor).sort((a, b) => Object.keys(KINDS).indexOf(a.kind) - Object.keys(KINDS).indexOf(b.kind));
+const kindOrder = Object.keys(KINDS);
+const stores = MAP.spots.filter(s => s.floor).sort((a, b) => kindOrder.indexOf(a.kind) - kindOrder.indexOf(b.kind));
 for (const s of stores) s.dot = el('circle', { cx: s.x, cy: s.y, r: .7, fill: KINDS[s.kind] || KINDS['서비스'], class: 'spot' });
-for (const b of MAP.buildings) { el('text', { x: b.x, y: b.y, class: 'bname' }, b.name); signs.push({ x: b.x, y: b.y, name: b.name, center: true }); }
+for (const b of MAP.buildings) { el('text', { x: b.x, y: b.y, class: 'bname' }, b.name); signs.push({ x: b.x, y: b.y, name: b.name }); }
 for (const s of stores) s.label = el('text', { x: s.x, y: s.y, dx: '.8em', class: s.kind === '편의시설' ? 'spotname minor' : 'spotname' }, s.name);
 for (const s of MAP.spots.filter(s => !s.floor)) {
   const exit = s.name.match(/^(.+역) (.+)번 출구$/);
@@ -57,7 +58,7 @@ for (const s of MAP.spots.filter(s => !s.floor)) {
   el('rect', { x: left + 4.6, y: s.y - 2, width: w, height: 4, rx: .6, class: 'exit' }, '', g);
   el('text', { x: left + 4.6 + w / 2, y: s.y + 1, class: 'sign' }, exit[2], g);
   el('text', { x: s.x, y: below ? s.y + 5.6 : s.y - 3.2, class: 'fixed' }, exit[1], g);
-  signs.push({ x: s.x, y: s.y, name: exit[1] + '  ', center: true });
+  signs.push({ x: s.x, y: s.y, name: exit[1] + '  ' });
 }
 const ping = el('circle', { id: 'ping', r: 2.4, display: 'none' });
 const pin = el('circle', { id: 'pin', r: 2.4, class: 'keep', display: 'none' });
@@ -141,6 +142,8 @@ scroller.addEventListener('pointerdown', e => {
 
 // 고른 곳을 약도에 빨갛게 표시한다. 한 곳이면 빨간 점을 찍고 그쪽으로 옮긴다. 행사와 가게 목록이 같이 쓴다.
 const pick = (btn, key) => {
+  const to = places[key]?.[0].floor;
+  if (to && to !== floor) setFloor(to); // 다른 층에 있는 곳을 고르면 그 층으로 먼저 바꾼다
   document.querySelectorAll('.pick').forEach(b => b.setAttribute('aria-pressed', b === btn));
   for (const s of picked) { s.dot?.classList.remove('on'); s.label?.classList.remove('on'); }
   picked = places[key] || [];
@@ -157,7 +160,7 @@ const pick = (btn, key) => {
     scroller.scrollTo(one.x / MAP.width * svg.clientWidth - scroller.clientWidth / 2, y / MAP.height * svg.clientHeight - scroller.clientHeight / 2);
   }
   relabel();
-  scroller.scrollIntoView({ block: 'nearest' });
+  if (btn) scroller.scrollIntoView({ block: 'nearest' }); // 목록에서 골랐을 때만 약도가 보이게 올린다
 };
 
 // 층 고르기
@@ -186,7 +189,7 @@ const setFloor = id => {
   const amenities = [...new Set(stores.filter(s => s.floor === id && s.kind === '편의시설').map(s => s.name))];
   if (amenities.length) cats.push(['편의시설', amenities]);
   if (!cats.length) return;
-  add(panel, 'h3', total ? `가게 ${total}곳` : '코엑스몰 편의시설');
+  add(panel, 'h3', total ? `가게 ${total}곳` : '편의시설');
   for (const [i, [cat, names]] of cats.entries()) {
     const box = add(panel, 'details');
     box.setAttribute('name', 'cat'); // 같은 name끼리는 하나만 펼쳐진다
