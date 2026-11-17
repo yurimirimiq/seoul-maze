@@ -3,191 +3,43 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>seoul-maze · 코엑스</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  /* 지하철 안내 표지판에서 가져온 색: 남색 판, 노란 출구 번호, 빨간 현위치 */
-  :root {
-    --floor: #f1f2f4;
-    --ink: #18244a;
-    --muted: #5b6480;
-    --rule: #d5d9e2;
-    --exit: #ffd400;
-    --here: #e5342b;
-    --bldg: #2c3c74;
-    --bldg-main: #4560b0;
-    --display: 'Black Han Sans', 'IBM Plex Sans KR', system-ui, sans-serif;
-    --date-col: 4.25rem;
-  }
-  body { font-family: 'IBM Plex Sans KR', system-ui, sans-serif; margin: 0 auto; padding: 20px 16px 40px; max-width: 480px;
-    color: var(--ink); background: var(--floor); line-height: 1.5; word-break: keep-all; }
-  :focus-visible { outline: 3px solid var(--here); outline-offset: 2px; }
-  a { color: inherit; }
-  ul { list-style: none; margin: 0; padding: 0; }
-
-  h1 { margin: 0 0 12px; font: 400 3.25rem/1 var(--display); letter-spacing: -.01em; }
-  h2 { margin: 36px 0 0; padding-bottom: 8px; font: 400 1.375rem/1.2 var(--display); border-bottom: 3px solid var(--ink); }
-
-  /* 약도 */
-  #map { display: block; width: 100%; border-radius: 6px; background: var(--ink); }
-  #map polygon { fill: var(--bldg); }
-  #map polygon.main { fill: var(--bldg-main); }
-  #map text { font-size: 3px; font-weight: 600; text-anchor: middle; fill: #fff; paint-order: stroke; stroke: var(--ink); stroke-width: .8; }
-  #map .spot { fill: #fff; }
-  #map .exit { fill: var(--exit); }
-  #map text.sign { fill: var(--ink); stroke: none; font-size: 2.8px; }
-  #map text.north { font-size: 2.6px; stroke: none; }
-  #pin { fill: var(--here); stroke: #fff; stroke-width: .8; }
-  #ping { fill: none; stroke: var(--here); stroke-width: .6; transform-box: fill-box; transform-origin: center; }
-  #ping.go { animation: ping .9s ease-out; }
-  @keyframes ping { from { transform: scale(1); opacity: 1; } to { transform: scale(4); opacity: 0; } }
-  @media (prefers-reduced-motion: reduce) { #ping.go { animation: none; } }
-  .caption { margin: 8px 0 0; font-size: .8125rem; color: var(--muted); }
-
-  /* 행사 시간표 */
-  .events li { border-bottom: 1px solid var(--rule); border-left: 4px solid transparent; padding-bottom: 10px; }
-  .events li:has(button[aria-pressed="true"]) { border-left-color: var(--here); background: #fff; }
-  .events button { display: grid; grid-template-columns: var(--date-col) 1fr auto; column-gap: 10px; align-items: start;
-    width: 100%; padding: 12px 8px 2px; text-align: left; font: inherit; color: inherit; background: none; border: 0; }
-  .date b { display: block; font: 400 1.25rem/1.2 var(--display); }
-  .date small, .what small { display: block; font-size: .8125rem; color: var(--muted); }
-  .what b { display: block; font-weight: 600; line-height: 1.35; }
-  .what small span { margin-right: 8px; color: var(--ink); font-weight: 500; }
-  .floor { min-width: 2.25rem; padding: 6px 4px; border-radius: 4px; text-align: center; font: 400 1rem/1.25 var(--display); color: #fff; background: var(--ink); }
-  .events a { display: inline-block; margin-left: calc(var(--date-col) + 18px); padding: 4px 0; font-size: .8125rem; color: var(--muted); }
-  .events li:not(:has(button)) { padding: 12px 8px; color: var(--muted); }
-
-  details { margin-top: 36px; border-top: 3px solid var(--ink); padding-top: 10px; }
-  summary { font: 400 1.125rem/1.3 var(--display); }
-  details li { margin-top: 8px; font-size: .9375rem; }
-  footer { margin-top: 32px; font-size: .75rem; color: var(--muted); }
-</style>
+<link rel="stylesheet" href="style.css">
+<title>패스파인더 pathfinder</title>
+<meta name="description" content="서울의 미로 같은 실내에서 길과 지금 열리는 행사를 찾아요.">
 </head>
 <body>
-<h1>코엑스</h1>
+<header class="hero">
+  <h1>패스파인더</h1>
+  <p class="en">
+    pathfinder
+    <svg viewBox="0 0 220 44" aria-hidden="true">
+      <path class="route" pathLength="1" d="M2 22H70V38H140V8H204"/>
+      <circle class="goal" cx="208" cy="8" r="7"/>
+    </svg>
+  </p>
+</header>
 
-<svg id="map" role="img" aria-label="코엑스 일대 약도"></svg>
-<p class="caption">땅 위 건물 모양이에요. 코엑스몰은 대부분 이 건물들 아래 지하 1층에 있어요.</p>
+<p class="lead">서울의 미로 같은 실내에서 길을 찾아요. 약도와 지금 열리는 행사를 한 화면에서 봐요.</p>
 
-<h2>지금 열리는 행사</h2>
-<ul id="now" class="events"></ul>
-<h2>곧 열리는 행사</h2>
-<ul id="soon" class="events"></ul>
-
-<details>
-  <summary>전시장 편의시설</summary>
-  <ul>
-    <li><b>종합안내데스크</b>: 1층 동문. 휴대폰 충전도 돼요.</li>
-    <li><b>물품보관소</b>: 1층 A홀 신한은행 옆 에스컬레이터 앞, B홀 안내데스크 옆 에스컬레이터 앞.</li>
-    <li><b>의무실</b>: 1층 서문 옆.</li>
-    <li><b>휠체어 대여</b>: 1층 서문 옆 안전상황실, 동문 안내데스크. 오전 8시 30분 ~ 오후 6시, 무료(신분증 필요).</li>
-    <li><b>무슬림 기도실</b>: 3층 E홀 근처.</li>
-  </ul>
-</details>
-
-<footer>
-  행사와 시설 정보는 2026-11-17에 <a href="https://www.coex.co.kr/event/full-schedules/">coex.co.kr</a>에서 확인한 내용이에요. 바뀔 수 있으니 가기 전에 공식 안내를 확인하세요.
-  건물 안 길찾기는 <a href="https://www.coex.co.kr/guide/indoor-navigation/">코엑스 공식 실내 길찾기</a>를 쓰세요.
-  지도 데이터 © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors.
-</footer>
-
-<script src="map.js"></script>
-<script src="events.js"></script>
-<script>
-  // 날짜가 YYYY-MM-DD 글자라서 글자 비교만으로 앞뒤를 가릴 수 있다.
-  const isOpen = (e, today) => e.start <= today && today <= e.end;
-  // 'Hall C (3층)' -> ['Hall C', '3'], 층이 안 적힌 곳은 ['로비']
-  const splitFloor = place => { const m = place.match(/\s*\(?(\d)층\)?/); return m ? [place.replace(m[0], '').trim(), m[1]] : [place]; };
-  const t = { start: '2026-01-01', end: '2026-01-31' };
-  console.assert(isOpen(t, '2026-01-01') && isOpen(t, '2026-01-31') && !isOpen(t, '2025-12-31') && !isOpen(t, '2026-02-01'), 'isOpen 자가 점검 실패');
-  console.assert(splitFloor('Hall C, D (3층)').join() === 'Hall C, D,3' && splitFloor('컨퍼런스룸(남) 4층').join() === '컨퍼런스룸(남),4' && splitFloor('로비').join() === '로비', 'splitFloor 자가 점검 실패');
-
-  // 약도 그리기
-  const svg = document.getElementById('map');
-  const el = (tag, attrs, text) => {
-    const n = document.createElementNS('http://www.w3.org/2000/svg', tag);
-    for (const k in attrs) n.setAttribute(k, attrs[k]);
-    if (text) n.textContent = text;
-    return svg.appendChild(n);
-  };
-  svg.setAttribute('viewBox', `0 0 ${MAP.width} ${MAP.height}`);
-  for (const b of MAP.buildings) el('polygon', { points: b.pts, class: b.label ? 'main' : '' });
-  for (const b of MAP.buildings) if (b.label) el('text', { x: b.x, y: b.y + 1 }, b.name);
-
-  // 지하철 출구는 실제 표지판처럼 그린다: 노선 색 동그라미 + 노란 출구 번호
-  const LINES = { '삼성역': ['2', '#00a84d'], '봉은사역': ['9', '#bdb092'] };
-  for (const s of MAP.spots) {
-    const below = s.y > MAP.height / 2; // 이름표가 겹치지 않게 남쪽 절반은 아래에, 북쪽 절반은 위에 쓴다
-    const exit = s.name.match(/^(.+역) (.+)번 출구$/);
-    if (exit && LINES[exit[1]]) {
-      const [line, color] = LINES[exit[1]];
-      const w = 2 + exit[2].length * 1.7;
-      const left = s.x - (4.6 + w) / 2;
-      el('circle', { cx: left + 2, cy: s.y, r: 2, fill: color });
-      el('text', { x: left + 2, y: s.y + 1, class: 'sign' }, line);
-      el('rect', { x: left + 4.6, y: s.y - 2, width: w, height: 4, rx: .6, class: 'exit' });
-      el('text', { x: left + 4.6 + w / 2, y: s.y + 1, class: 'sign' }, exit[2]);
-      el('text', { x: s.x, y: below ? s.y + 5.6 : s.y - 3.2 }, exit[1]);
-    } else {
-      el('circle', { cx: s.x, cy: s.y, r: 1, class: 'spot' });
-      el('text', { x: s.x, y: below ? s.y + 3.8 : s.y - 1.8 }, s.name);
-    }
-  }
-  el('path', { d: `M${MAP.width - 6} 9l2-5 2 5z`, fill: '#fff' });
-  el('text', { x: MAP.width - 4, y: 12.4, class: 'north' }, '북');
-  const ping = el('circle', { id: 'ping', r: 2.4, display: 'none' });
-  const pin = el('circle', { id: 'pin', r: 2.4, display: 'none' });
-  const places = Object.fromEntries([...MAP.buildings, ...MAP.spots].map(p => [p.name, p]));
-
-  // 행사 목록
-  const today = new Date().toLocaleDateString('sv'); // 'sv' 형식 = 내 시간대 기준 YYYY-MM-DD
-  const day = d => d.slice(5).replace('-', '.');
-  const add = (parent, tag, text, cls) => {
-    const n = parent.appendChild(document.createElement(tag));
-    if (text) n.textContent = text;
-    if (cls) n.className = cls;
-    return n;
-  };
-  const fill = (id, events, emptyText, dateText) => {
-    const list = document.getElementById(id);
-    if (!events.length) add(list, 'li', emptyText);
-    for (const e of events) {
-      const li = add(list, 'li');
-      const btn = add(li, 'button');
-      btn.setAttribute('aria-pressed', 'false');
-      const [big, small] = dateText(e);
-      const date = add(btn, 'span', '', 'date');
-      add(date, 'b', big);
-      add(date, 'small', small);
-      const [place, floor] = splitFloor(e.place);
-      const what = add(btn, 'span', '', 'what');
-      add(what, 'b', e.name);
-      add(add(what, 'small'), 'span', place).after(e.cat);
-      if (floor) add(btn, 'span', floor + '층', 'floor');
-      btn.onclick = () => {
-        document.querySelectorAll('.events button').forEach(b => b.setAttribute('aria-pressed', b === btn));
-        const p = places[e.at || '코엑스 전시장'];
-        if (!p) return console.error('약도에 없는 곳:', e.at);
-        for (const c of [pin, ping]) {
-          c.setAttribute('cx', p.x);
-          c.setAttribute('cy', p.y + 5); // 이름표를 가리지 않게 조금 아래에 찍는다
-          c.removeAttribute('display');
-        }
-        ping.classList.remove('go');
-        ping.getBBox(); // 애니메이션을 처음부터 다시 돌리려면 한 번 읽어 줘야 한다
-        ping.classList.add('go');
-        svg.scrollIntoView({ block: 'nearest' });
-      };
-      if (e.url) add(li, 'a', '공식 안내 보기').href = e.url;
-    }
-  };
-  const byStart = (a, b) => a.start.localeCompare(b.start);
-  fill('now', EVENTS.filter(e => isOpen(e, today)).sort(byStart), '지금 열리는 행사가 없어요.',
-    e => e.end === today ? ['오늘', '까지'] : [day(e.end), '까지']);
-  fill('soon', EVENTS.filter(e => e.start > today).sort(byStart), '예정된 행사가 없어요.',
-    e => [day(e.start), e.end === e.start ? '하루만' : '~ ' + day(e.end)]);
-</script>
+<h2>서울 3대 미로</h2>
+<ul class="places">
+  <li><a class="row" href="coex.html">
+    <span class="name">코엑스</span>
+    <span class="lines"><span class="line l2">2</span><span class="line l9">9</span></span>
+  </a></li>
+  <li><div class="row soon">
+    <span class="name">잠실역</span>
+    <small>준비 중</small>
+    <span class="lines"><span class="line l2">2</span><span class="line l8">8</span></span>
+  </div></li>
+  <li><div class="row soon">
+    <span class="name">고속터미널</span>
+    <small>준비 중</small>
+    <span class="lines"><span class="line l3">3</span><span class="line l7">7</span><span class="line l9">9</span></span>
+  </div></li>
+</ul>
 </body>
 </html>
