@@ -112,6 +112,7 @@ const [zoomIn, zoomOut] = document.querySelectorAll('.zoom button');
 const fit = () => Math.max(1, scroller.clientHeight / scroller.clientWidth * MAP.width / MAP.height);
 const MAX_ZOOM = 32; // 지하상가 칸은 4m 남짓이라 이만큼 키워야 번호가 다 보인다
 let zoom = 1, floor, picked = [];
+let live = null, settle; // live: 손가락이나 휠로 늘리는 중인 크기 {z, at}. settle: 멈추면 반영하는 타이머
 
 // 지금 층의 가게 이름표 가운데 서로 겹치지 않는 것만 보여 준다. 키울수록 더 많이 보인다.
 const relabel = () => {
@@ -141,6 +142,7 @@ const relabel = () => {
 };
 // at: 그 자리가 움직이지 않게 키울 화면 위치(스크롤 상자 기준). 안 주면 가운데.
 const setZoom = (z, at = { x: scroller.clientWidth / 2, y: scroller.clientHeight / 2 }) => {
+  clearTimeout(settle); live = null; svg.style.transform = svg.style.willChange = ''; // 늘려만 둔 것(zoomLive)이 있으면 지우고 제대로 그린다
   const mx = (scroller.scrollLeft + at.x) / zoom, my = (scroller.scrollTop + at.y) / zoom;
   zoom = Math.min(MAX_ZOOM, Math.max(fit(), z));
   svg.style.width = zoom * 100 + '%';
@@ -151,27 +153,44 @@ const setZoom = (z, at = { x: scroller.clientWidth / 2, y: scroller.clientHeight
 };
 zoomIn.onclick = () => setZoom(zoom * 2);
 zoomOut.onclick = () => setZoom(zoom / 2);
+// 휠이나 손가락으로 키우는 동안에는 약도를 다시 그리지 않고 그림째 늘려만 둔다. 다시 그리기(칸 크기 바꾸기, 이름표 고르기)는 무거워서
+// 움직일 때마다 하면 폰에서 뚝뚝 끊긴다. 손을 떼거나 잠깐 멈추면 그때 한 번만 제대로 다시 그린다(setZoom).
+const zoomLive = (z, at) => {
+  if (!live) { // 늘리는 중심은 처음 잡은 자리로 둔다
+    svg.style.transformOrigin = `${scroller.scrollLeft + at.x}px ${scroller.scrollTop + at.y}px`;
+    svg.style.willChange = 'transform';
+    live = { at };
+  }
+  live.z = Math.min(MAX_ZOOM, Math.max(fit(), z));
+  svg.style.transform = `scale(${live.z / zoom})`;
+  clearTimeout(settle);
+  settle = setTimeout(commit, 200);
+};
+const commit = () => live && setZoom(live.z, live.at);
 // 마우스 휠이나 트랙패드로도 키우고 줄인다. 커서가 있는 자리를 중심으로 움직인다.
 scroller.addEventListener('wheel', e => {
-  const next = Math.min(MAX_ZOOM, Math.max(fit(), zoom * Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .002)))); // ctrlKey = 트랙패드 두 손가락 벌리기
-  if (next === zoom) return; // 더 줄일 수 없으면 페이지가 평소처럼 스크롤되게 둔다
+  const from = live ? live.z : zoom;
+  const next = Math.min(MAX_ZOOM, Math.max(fit(), from * Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .002)))); // ctrlKey = 트랙패드 두 손가락 벌리기
+  if (next === from) return; // 더 줄일 수 없으면 페이지가 평소처럼 스크롤되게 둔다
   e.preventDefault();
   const box = scroller.getBoundingClientRect();
-  setZoom(next, { x: e.clientX - box.left, y: e.clientY - box.top });
+  zoomLive(next, { x: e.clientX - box.left, y: e.clientY - box.top });
 }, { passive: false });
-// 폰에서는 두 손가락을 벌리거나 오므려서 키우고 줄인다. 두 손가락의 가운데를 중심으로 움직인다.
+// 폰에서는 두 손가락을 벌리거나 오므려서 키우고 줄인다. 처음 두 손가락을 댄 자리의 가운데를 중심으로 움직인다.
 let pinch;
 const spread = e => Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-scroller.addEventListener('touchstart', e => { pinch = e.touches.length === 2 ? { spread: spread(e), zoom } : null; });
+scroller.addEventListener('touchstart', e => {
+  commit(); // 앞서 늘려 둔 것이 있으면 먼저 반영하고 시작한다
+  const box = scroller.getBoundingClientRect();
+  pinch = e.touches.length !== 2 ? null : { spread: spread(e), zoom,
+    at: { x: (e.touches[0].clientX + e.touches[1].clientX) / 2 - box.left, y: (e.touches[0].clientY + e.touches[1].clientY) / 2 - box.top } };
+});
 scroller.addEventListener('touchmove', e => {
   if (!pinch || e.touches.length !== 2) return;
   e.preventDefault(); // 페이지 전체가 커지는 것을 막는다
-  const box = scroller.getBoundingClientRect();
-  setZoom(pinch.zoom * spread(e) / pinch.spread, {
-    x: (e.touches[0].clientX + e.touches[1].clientX) / 2 - box.left,
-    y: (e.touches[0].clientY + e.touches[1].clientY) / 2 - box.top });
+  zoomLive(pinch.zoom * spread(e) / pinch.spread, pinch.at);
 }, { passive: false });
-scroller.addEventListener('touchend', () => { pinch = null; });
+scroller.addEventListener('touchend', () => { pinch = null; commit(); });
 // 마우스로는 끌어서 옮긴다. 손가락 하나로 끄는 것은 브라우저가 알아서 옮겨 준다.
 scroller.addEventListener('pointerdown', e => {
   if (e.pointerType !== 'mouse') return;
