@@ -4,7 +4,7 @@
 새 장소 추가: 아래 PLACES에 항목을 하나 더 넣는다.
 
 - 건물, 길, 지하철 출구: 오픈스트리트맵에서 받는다. © OpenStreetMap contributors (ODbL)
-- 가게와 편의시설 위치, 실내 통로: <장소>/poi.tsv, <장소>/paths.tsv가 있으면 읽어서 약도 좌표로 바꾼다.
+- 실내 칸 모양과 가게 위치: <장소>/shapes.tsv, <장소>/poi.tsv가 있으면 읽어서 약도 좌표로 바꾼다.
 """
 import json
 import math
@@ -113,7 +113,7 @@ def main(place):
         x, y = xy(found[osm_id]["lat"], found[osm_id]["lon"])
         spots.append({"name": name, "x": x, "y": y})
 
-    # 가게, 편의시설, 실내 통로: 공식 지도 좌표를 돌리고 옮겨서 약도 좌표로 바꾼다
+    # 실내 칸과 가게: 공식 지도 좌표를 돌리고 옮겨서 약도 좌표로 바꾼다
     def rows(name):
         path = f"{place}/{name}"
         return [r.rstrip("\n").split("\t") for r in open(path, encoding="utf-8") if not r.startswith("#")] if os.path.exists(path) else []
@@ -121,21 +121,28 @@ def main(place):
     deg, dx, dy = cfg.get("poi_transform", (0, 0, 0))
     cos, sin, k = math.cos(math.radians(deg)), math.sin(math.radians(deg)), 0.1 / unit
 
-    def place_xy(px, py):
+    def place_xy(px, py):  # 가게 칸은 몇 m짜리라 소수 둘째 자리까지 남긴다
         px, py = float(px), float(py)
-        return round(k * (cos * px - sin * py) + dx, 1), round(k * (sin * px + cos * py) + dy, 1)
+        return round(k * (cos * px - sin * py) + dx, 2), round(k * (sin * px + cos * py) + dy, 2)
 
-    for floor, kind, name, px, py in rows("poi.tsv"):
+    # shapes: 층 -> [[종류, 꼭짓점들], ...]. 파일에 적힌 순서(큰 것부터)대로 그려야 작은 칸이 위에 온다.
+    shapes, index = {}, {}
+    for floor, kind, shape_id, pts in rows("shapes.tsv"):
+        index[shape_id] = (floor, len(shapes.setdefault(floor, [])))
+        shapes[floor].append([kind, " ".join("%s,%s" % place_xy(*p.split(",")) for p in pts.split())])
+    for floor, kind, name, px, py, shape_id in rows("poi.tsv"):
         x, y = place_xy(px, py)
-        spots.append({"name": name, "x": x, "y": y, "floor": floor, "kind": kind})
-    paths = {}  # 층 -> SVG 길 모양(d). 토막마다 M(시작) L(끝)로 잇는다.
-    for floor, x1, y1, x2, y2 in rows("paths.tsv"):
-        paths[floor] = paths.get(floor, "") + "M%s %sL%s %s" % (*place_xy(x1, y1), *place_xy(x2, y2))
+        spot = {"name": name, "x": x, "y": y, "floor": floor, "kind": kind}
+        if index.get(shape_id, [None])[0] == floor:
+            spot["shape"] = index[shape_id][1]  # 그 층 shapes에서 이 가게가 차지한 칸의 번호
+            if shapes[floor][spot["shape"]][0] == "가게":
+                shapes[floor][spot["shape"]][0] = kind  # 칸을 가게 종류 색으로 칠할 수 있게
+        spots.append(spot)
     for i in buildings + spots:
         assert 0 <= i["x"] <= WIDTH and 0 <= i["y"] <= height, f"범위 밖: {i['name']}"
 
     data = {"width": WIDTH, "height": height, "main": buildings[0]["name"], "roads": roads, "roadNames": road_names,
-            "blocks": blocks, "buildings": buildings, "paths": paths, "spots": spots}
+            "blocks": blocks, "buildings": buildings, "shapes": shapes, "spots": spots}
     os.makedirs(place, exist_ok=True)
     with open(f"{place}/map.js", "w", encoding="utf-8") as f:
         f.write("// make_map.py가 만든 파일. 손으로 고치지 말고 make_map.py를 다시 돌린다.\n")

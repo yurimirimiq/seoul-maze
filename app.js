@@ -17,7 +17,7 @@ const KINDS = {
 // 역 이름 -> 노선 번호. 새 장소를 넣을 때 그 장소의 역을 여기에 더한다. 노선 색은 style.css에 있다.
 const LINES = { '삼성역': '2', '봉은사역': '9' };
 
-// 약도 그리기: 길 -> 건물 -> 실내 통로 -> 가게 점 -> 이름표 순서로 쌓는다
+// 약도 그리기: 길 -> 건물 -> 실내 칸 -> 이름표 순서로 쌓는다
 const svg = document.getElementById('map');
 const el = (tag, attrs, text, parent = svg) => {
   const n = document.createElementNS('http://www.w3.org/2000/svg', tag);
@@ -29,21 +29,31 @@ svg.setAttribute('viewBox', `0 0 ${MAP.width} ${MAP.height}`);
 for (const r of MAP.roads) el('polyline', { points: r.pts, 'stroke-width': r.w, class: r.w >= 2.5 ? 'road big' : 'road' });
 for (const pts of MAP.blocks) el('polygon', { points: pts, class: 'block' });
 for (const b of MAP.buildings) el('polygon', { points: b.pts });
-// 실내 통로: 층마다 넓은 바닥 띠 위에 흰 길을 얹는다. 고른 층 것만 보인다.
-const halls = {};
-for (const [id, d] of Object.entries(MAP.paths || {})) {
-  halls[id] = el('g', { class: 'halls' });
-  el('path', { d, class: 'floorband' }, '', halls[id]);
-  el('path', { d, class: 'walk' }, '', halls[id]);
+// 실내: 층마다 흰 바닥 위에 가게 칸을 얹는다. 칸 사이에 남는 흰 곳이 통로다. 고른 층 것만 보인다.
+// 자료에 바닥 모양은 없고 벽 조각만 있어서, 모든 칸을 굵은 흰 테두리로 한 번 깔아 통로까지 하얗게 메운다.
+// 칸은 가게 종류 색을 옅게 칠한다(--tint). 종류를 모르는 가게는 style.css의 기본색, 화장실 같은 시설은 회색이다.
+const rooms = {};
+for (const [id, list] of Object.entries(MAP.shapes || {})) {
+  const g = el('g', { class: 'floorplan' });
+  el('path', { d: list.map(([, pts]) => 'M' + pts.replaceAll(' ', 'L') + 'Z').join(''), class: 'ground' }, '', g);
+  rooms[id] = el('g', { class: 'rooms' }, '', g);
+  for (const [kind, pts] of list) {
+    const room = el('polygon', { points: pts, class: { '바닥': 'wall', '기타': 'etc' }[kind] || '' }, '', rooms[id]);
+    const tint = KINDS[kind] || (kind !== '가게' && KINDS['편의시설']);
+    if (tint) room.style.setProperty('--tint', tint);
+  }
 }
 for (const n of MAP.roadNames) el('text', { x: n.x, y: n.y, class: 'roadname', transform: `rotate(${n.rot} ${n.x} ${n.y})` }, n.name);
 
 const signs = []; // 늘 보이는 것들이 차지한 자리. 가게 이름표가 이 위에 겹치지 않게 한다.
 const kindOrder = Object.keys(KINDS);
 const stores = MAP.spots.filter(s => s.floor).sort((a, b) => kindOrder.indexOf(a.kind) - kindOrder.indexOf(b.kind));
-for (const s of stores) s.dot = el('circle', { cx: s.x, cy: s.y, r: .7, fill: KINDS[s.kind] || KINDS['서비스'], class: 'spot' });
+for (const s of stores) {
+  s.room = rooms[s.floor]?.children[s.shape]; // 이 가게가 차지한 칸. 칸이 없는 곳만 점으로 찍는다.
+  if (!s.room) s.dot = el('circle', { cx: s.x, cy: s.y, r: .7, fill: KINDS[s.kind] || KINDS['서비스'], class: 'spot' });
+}
 for (const b of MAP.buildings) { el('text', { x: b.x, y: b.y, class: 'bname' }, b.name); signs.push({ x: b.x, y: b.y, name: b.name }); }
-for (const s of stores) s.label = el('text', { x: s.x, y: s.y, dx: '.8em', class: s.kind === '편의시설' ? 'spotname minor' : 'spotname' }, s.name);
+for (const s of stores) s.label = el('text', { x: s.x, y: s.y, dx: s.room ? 0 : '.8em', class: 'spotname' + (s.room ? ' mid' : '') + (s.kind === '편의시설' ? ' minor' : '') }, s.name);
 for (const s of MAP.spots.filter(s => !s.floor)) {
   const exit = s.name.match(/^(.+역) (.+)번 출구$/);
   if (!exit || !LINES[exit[1]]) { el('text', { x: s.x, y: s.y, class: 'bname' }, s.name); continue; }
@@ -88,11 +98,16 @@ const relabel = () => {
   const font = 3 * px / zoom;             // 글자 크기는 키워도 그대로다
   const width = name => [...name].reduce((w, ch) => w + (ch.charCodeAt(0) < 128 ? .6 : 1), 0) * font;
   const kept = signs.map(g => ({ x: g.x * px - width(g.name) / 2, y: g.y * px - font * .7, w: width(g.name), h: font * 1.4 }));
-  // 편의시설은 목록에서 골랐을 때만 보인다. 늘 보이면 가게 점과 섞여 어지럽다.
+  // 편의시설 이름은 목록에서 골랐을 때만 보인다. 늘 보이면 가게 이름과 섞여 어지럽다.
   const shown = s => s.floor === floor && (s.kind !== '편의시설' || picked.includes(s));
-  for (const s of stores) s.dot.style.display = s.label.style.display = shown(s) ? '' : 'none';
+  for (const s of stores) {
+    s.label.style.display = 'none';
+    if (s.dot) s.dot.style.display = shown(s) ? '' : 'none';
+  }
   for (const s of [...picked.filter(shown), ...stores.filter(s => shown(s) && !picked.includes(s))]) {
-    const box = { x: s.x * px, y: s.y * px - font * .9, w: width(s.name) + font * 1.6, h: font * 1.8 }; // 점부터 이름 끝까지, 숨 쉴 틈을 조금 둔다
+    // 이름이 차지할 자리에 숨 쉴 틈을 조금 둔다. 칸이 있는 가게는 가운데 정렬, 점만 있는 곳은 점 오른쪽.
+    const w = width(s.name) + font * (s.room ? .8 : 1.6);
+    const box = { x: s.x * px - (s.room ? w / 2 : 0), y: s.y * px - font * .9, w, h: font * 1.8 };
     const show = picked.includes(s) || !kept.some(k => overlaps(k, box));
     s.label.style.display = show ? '' : 'none';
     if (show) kept.push(box);
@@ -140,17 +155,18 @@ scroller.addEventListener('pointerdown', e => {
   addEventListener('pointerup', () => scroller.removeEventListener('pointermove', move), { once: true });
 });
 
-// 고른 곳을 약도에 빨갛게 표시한다. 한 곳이면 빨간 점을 찍고 그쪽으로 옮긴다. 행사와 가게 목록이 같이 쓴다.
+// 고른 곳을 약도에 빨갛게 표시한다. 한 곳이면 그쪽으로 옮긴다. 칸이 있는 가게는 칸을 칠하고, 칸이 없는 곳은 빨간 점을 찍는다.
+// 행사와 가게 목록이 같이 쓴다.
 const pick = (btn, key) => {
   const to = places[key]?.[0].floor;
   if (to && to !== floor) setFloor(to); // 다른 층에 있는 곳을 고르면 그 층으로 먼저 바꾼다
   document.querySelectorAll('.pick').forEach(b => b.setAttribute('aria-pressed', b === btn));
-  for (const s of picked) { s.dot?.classList.remove('on'); s.label?.classList.remove('on'); }
+  for (const s of picked) for (const n of [s.room, s.dot, s.label]) n?.classList.remove('on');
   picked = places[key] || [];
   if (key && !picked.length) console.error('약도에 없는 곳:', key);
-  for (const s of picked) { s.dot?.classList.add('on'); s.label?.classList.add('on'); }
+  for (const s of picked) for (const n of [s.room, s.dot, s.label]) n?.classList.add('on');
   const one = picked.length === 1 && picked[0];
-  for (const c of [pin, ping]) c.setAttribute('display', one ? '' : 'none');
+  for (const c of [pin, ping]) c.setAttribute('display', one && !one.room ? '' : 'none');
   if (one) {
     const y = one.pts ? one.y + 5 : one.y; // 건물은 가운데 이름을 가리지 않게 조금 아래에 찍는다
     for (const c of [pin, ping]) { c.setAttribute('cx', one.x); c.setAttribute('cy', y); }
@@ -171,7 +187,7 @@ const setFloor = id => {
   if (!f) return;
   floor = id;
   for (const b of floorBtns.children) b.setAttribute('aria-pressed', b.dataset.floor === id);
-  for (const f in halls) halls[f].style.display = f === id ? '' : 'none';
+  for (const f in rooms) rooms[f].parentNode.style.display = f === id ? '' : 'none';
   pick(null, ''); // 다른 층에서 고른 표시를 지운다
 
   panel.replaceChildren();

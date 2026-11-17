@@ -8,7 +8,6 @@
   --here: #e5342b;
   --map: #f4f5f7;
   --bldg: #e2e6ee;
-  --bldg-main: #e6e2f2;
   --date-col: 4.25rem;
 }
 /* 지하철 노선 색. 글자색은 노선 색 위에서 읽히는 쪽으로 고른다. */
@@ -56,17 +55,20 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 70
 #map .road.big { stroke: #fff6d6; }
 #map polygon { fill: var(--bldg); stroke: #cfd5e2; stroke-width: .15; }
 #map polygon.block { fill: #e9ebf0; stroke: none; }
-/* 실내: 옅은 보라 바닥 띠(가게가 늘어선 폭) 위에 흰 통로 */
-#map .halls path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
-#map .floorband { stroke: var(--bldg-main); stroke-width: 4.6; }
-#map .walk { stroke: #fff; stroke-width: 1; }
+/* 실내: 흰 바닥 위에 가게 칸. 칸 사이 흰 곳이 통로로 보인다 */
+#map .ground { fill: #fff; stroke: #fff; stroke-width: 4.5; stroke-linejoin: round; } /* 테두리 굵기 = 메울 통로 너비(약 30m) */
+#map .rooms polygon { --tint: #8f86c4; fill: color-mix(in srgb, var(--tint) 20%, #fff); stroke: #fff; stroke-width: .1; stroke-linejoin: round; }
+#map .rooms .etc { fill: #eef0f3; }
+#map .rooms .wall { fill: #c9cedb; stroke: none; }
+#map .rooms .on { fill: var(--here); }
 /* 자간은 0으로 되돌린다. 본문의 자간이 약도 좌표 단위로 넘어오면 글자가 겹친다 */
 #map text { letter-spacing: 0; font-size: calc(3px / var(--z, 1)); font-weight: 500; fill: var(--ink); paint-order: stroke; stroke: var(--map); stroke-width: calc(.9px / var(--z, 1)); }
 #map text.bname { text-anchor: middle; dominant-baseline: central; font-weight: 600; fill: #9aa2b8; }
 #map text.roadname { text-anchor: middle; dominant-baseline: central; fill: #a3a9b8; stroke: none; }
 #map text.spotname { dominant-baseline: central; }
+#map text.spotname.mid { text-anchor: middle; }
 #map text.spotname.minor { fill: var(--muted); font-weight: 400; }
-#map text.spotname.on { fill: var(--here); font-weight: 600; }
+#map text.spotname.on { fill: var(--ink); font-weight: 700; }
 #map text.fixed { text-anchor: middle; font-size: 3px; font-weight: 600; stroke-width: .9px; }
 #map text.sign { text-anchor: middle; font-size: 2.8px; font-weight: 600; fill: var(--line-ink, var(--ink)); stroke: none; }
 /* 점과 표지판은 약도를 키워도 화면에서 같은 크기로 남는다 */
