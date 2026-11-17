@@ -40,7 +40,7 @@
 - **가게 목록 새로 받기**: `python3 make_stores.py coex`를 실행한다. `coex/stores.js`가 새로 만들어진다.
 - **약도 고치기**: `make_map.py`에서 이름 붙일 건물이나 지점을 넣고 빼고 `python3 make_map.py coex`를 실행한다. `coex/map.js`가 새로 만들어진다. 가게 위치는 `coex/poi.tsv`에서 읽는다.
 
-서버 없이 HTML 파일과 데이터 파일만으로 돌아간다. 글꼴(IBM Plex Sans KR)만 Google Fonts에서 받아 온다.
+서버 없이 HTML 파일과 데이터 파일만으로 돌아간다. 글꼴(프리텐다드)만 jsDelivr에서 받아 온다.
 
 ## 장소 추가하는 법
 

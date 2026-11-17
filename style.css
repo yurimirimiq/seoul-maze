@@ -18,19 +18,19 @@
 .l8 { --line: #e6186c; --line-ink: #fff; }
 .l9 { --line: #bdb092; }
 
-body { font-family: 'IBM Plex Sans KR', system-ui, sans-serif; margin: 0 auto; padding: 20px 16px 40px; max-width: 480px;
+body { font-family: 'Pretendard Variable', Pretendard, -apple-system, system-ui, sans-serif; letter-spacing: -.01em; margin: 0 auto; padding: 20px 16px 40px; max-width: 480px;
   color: var(--ink); background: var(--floor); line-height: 1.5; word-break: keep-all; }
 :focus-visible { outline: 3px solid var(--here); outline-offset: 2px; }
 a { color: inherit; }
 ul { list-style: none; margin: 0; padding: 0; }
 
-h1 { margin: 0 0 14px; font-size: 2.5rem; font-weight: 600; line-height: 1.1; letter-spacing: -.03em; }
-h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 600; line-height: 1.3; letter-spacing: -.01em; border-bottom: 2px solid var(--ink); }
+h1 { margin: 0 0 14px; font-size: 2.375rem; font-weight: 700; line-height: 1.1; letter-spacing: -.035em; }
+h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 700; line-height: 1.3; letter-spacing: -.02em; border-bottom: 2px solid var(--ink); }
 
 /* 워드마크: 소문자 pathfinder, i의 점만 빨간 도착점 */
-.wordmark { font-family: 'IBM Plex Sans KR', system-ui, sans-serif; font-weight: 600; letter-spacing: -.03em; line-height: 1; color: var(--ink); text-decoration: none; }
-.wordmark .i { position: relative; margin-left: .1em; } /* f의 갈고리와 점이 붙지 않게 조금 띄운다 */
-.wordmark .i::before { content: ''; position: absolute; left: 50%; bottom: .88em; width: .18em; height: .18em; margin-left: -.09em; border-radius: 50%; background: var(--here); }
+.wordmark { font-weight: 700; letter-spacing: -.04em; line-height: 1; color: var(--ink); text-decoration: none; }
+.wordmark .i { position: relative; margin-left: .08em; } /* f의 갈고리와 점이 붙지 않게 조금 띄운다 */
+.wordmark .i::before { content: ''; position: absolute; left: 50%; bottom: .84em; width: .18em; height: .18em; margin-left: -.09em; border-radius: 50%; background: var(--here); }
 .brand { display: inline-block; margin-bottom: 20px; font-size: 1.25rem; }
 
 /* 홈 */
@@ -40,7 +40,7 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 60
 .lead { margin: 20px 0 0; font-size: 1.0625rem; }
 .places li { border-bottom: 1px solid var(--rule); }
 .places .row { display: flex; align-items: center; gap: 12px; padding: 16px 8px; text-decoration: none; }
-.places .name { margin-right: auto; font-size: 1.5rem; font-weight: 600; line-height: 1.2; letter-spacing: -.02em; }
+.places .name { margin-right: auto; font-size: 1.5rem; font-weight: 700; line-height: 1.2; letter-spacing: -.03em; }
 .places .soon { color: var(--muted); }
 .places .soon .lines { opacity: .45; }
 .places small { font-size: .8125rem; color: var(--muted); }
@@ -117,7 +117,7 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 60
 .events li:has(button[aria-pressed="true"]) { border-left-color: var(--here); background: #fff; }
 .events button { display: grid; grid-template-columns: var(--date-col) 1fr auto; column-gap: 10px; align-items: start;
   width: 100%; padding: 12px 8px 2px; text-align: left; font: inherit; color: inherit; background: none; border: 0; }
-.date b { display: block; font-size: 1.125rem; font-weight: 600; line-height: 1.3; font-variant-numeric: tabular-nums; }
+.date b { display: block; font-size: 1.125rem; font-weight: 700; line-height: 1.3; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .date small, .what small { display: block; font-size: .8125rem; color: var(--muted); }
 .what b { display: block; font-weight: 600; line-height: 1.35; }
 .what small span { margin-right: 8px; color: var(--ink); font-weight: 500; }
