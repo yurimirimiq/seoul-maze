@@ -1,6 +1,6 @@
 """고속터미널 지하상가(고투몰)의 가게 칸 배치를 gosok/shapes.tsv, gosok/poi.tsv로 만든다.
 
-쓰는 법: python3 make_gotomall.py  (그다음 python3 make_map.py gosok)
+쓰는 법: python3 make_gotomall.py  (그다음 python3 make_map.py gosok). gosok/shapes.tsv, poi.tsv, paths.tsv를 만든다.
 
 근거: 서울시설공단이 공개한 "터미널 지하도상가 배치도" 1~3구역 그림을 보고, 줄마다 몇 번 칸부터 몇 번 칸까지가
 어디서 어디까지 놓였는지를 손으로 옮겨 적었다. 그림을 그대로 쓰지 않고 칸 번호와 순서만 가져와 새로 그린다.
@@ -130,6 +130,25 @@ def main():
     for x, y in TOILETS:
         pois.append(("B1", "편의시설", "화장실", *src(x, y).split(","), ""))
 
+    # 길찾기용 통로 선: A-B줄 사이 북쪽 복도와 C-D줄 사이 남쪽 복도를 한 칸 간격으로 잇고,
+    # B·C줄이 끊긴 곳(가로지르는 통로)과 양 끝 광장, 출입구를 가까운 복도에 붙인다.
+    north, south, paths = -1.67, 1.67, []
+    for x in range(-1, 155):
+        paths += [(x, north, x + 1, north), (x, south, x + 1, south)]
+    b_runs = sorted(((px0 - SEG[seg][0]) / SEG[seg][2] + SEG[seg][1], (px1 - SEG[seg][0]) / SEG[seg][2] + SEG[seg][1])
+                    for seg, row, first, last, px0, px1 in RUNS if row == "B")
+    crossings = [-1, 155] + [round((end + nxt) / 2) for (_, end), (nxt, _) in zip(b_runs, b_runs[1:]) if nxt - end > 1.5]
+    paths += [(x, north, x, south) for x in sorted(set(crossings))]
+    west, east = (-8.0, 0.3), (164.5, 0.0)  # 광장 가운데
+    paths += [(*west, -1, north), (*west, -1, south), (*east, 155, north), (*east, 155, south)]
+    for name, (x, y) in GATES.items():
+        hub = west if x < -1 else east if x > 155 else (min(max(round(x), -1), 155), north if y < 0 else south)
+        paths.append((x, y, *hub))
+
+    with open("gosok/paths.tsv", "w", encoding="utf-8") as f:
+        f.write("# make_gotomall.py가 만든 파일. 고속터미널 지하상가의 길찾기용 통로 선(토막마다 양 끝점). 좌표계는 poi.tsv와 같다.\n")
+        f.write("# 층\tx1\ty1\tx2\ty2\n")
+        f.writelines("B1\t" + "\t".join(str(round(v * SRC)) for v in p) + "\n" for p in paths)
     with open("gosok/shapes.tsv", "w", encoding="utf-8") as f:
         f.write("# make_gotomall.py가 만든 파일. 손으로 고치지 말고 make_gotomall.py를 고쳐서 다시 돌린다.\n")
         f.write("# 고속터미널 지하상가(고투몰)의 바닥과 가게 칸. 좌표는 10cm 단위이고 A001 가운데가 원점, 동쪽과 남쪽이 +다.\n")
@@ -140,7 +159,7 @@ def main():
         f.write("# 고속터미널 지하상가의 가게 칸 번호, 출입구, 화장실 위치. 가게 이름은 없다(공개된 배치도에 칸 번호만 있다).\n")
         f.write("# 층\t종류\t이름\tx\ty\t자리\n")
         f.writelines("\t".join(p) + "\n" for p in pois)
-    print(f"gosok/shapes.tsv, gosok/poi.tsv 저장: 가게 칸 {len(seen)}개, 출입구와 연결통로 {len(GATES)}곳, 화장실 {len(TOILETS)}곳")
+    print(f"gosok/shapes.tsv, poi.tsv, paths.tsv 저장: 가게 칸 {len(seen)}개, 출입구와 연결통로 {len(GATES)}곳, 화장실 {len(TOILETS)}곳, 통로 토막 {len(paths)}개")
 
 
 if __name__ == "__main__":

@@ -12,6 +12,14 @@
 <a class="brand wordmark" href="./" aria-label="패스파인더 홈">pathf<span class="i">ı</span>nder</a>
 <h1>고속터미널</h1>
 
+<form id="finder" class="finder" role="search">
+  <label><span>도착</span> <input type="search" placeholder="가게 이름, 시설, 칸 번호" autocomplete="off"></label>
+  <label><span>출발</span> <input type="search" placeholder="지금 있는 곳 (안 적어도 돼요)" autocomplete="off"></label>
+  <button type="button">내 위치</button>
+</form>
+<ul id="hits" class="hits"></ul>
+<p id="guide" class="guide" aria-live="polite"></p>
+
 <div class="mapwrap">
   <div id="mapscroll" class="mapscroll"><svg id="map" role="img" aria-label="고속터미널 일대 약도"></svg></div>
   <div id="floors" class="floors" role="group" aria-label="층 선택"></div>

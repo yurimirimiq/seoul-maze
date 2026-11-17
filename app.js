@@ -88,6 +88,10 @@ for (const s of MAP.spots.filter(s => !s.floor)) {
 }
 const ping = el('circle', { id: 'ping', r: 2.4, display: 'none' });
 const pin = el('circle', { id: 'pin', r: 2.4, class: 'keep', display: 'none' });
+// 길 안내: 길(파란 선), GPS 오차 범위(옅은 원), 출발지(파란 점)
+const routeLine = el('polyline', { id: 'route', display: 'none' });
+const meRing = el('circle', { id: 'mering', display: 'none' });
+const me = el('circle', { id: 'me', r: 1.6, class: 'keep', display: 'none' });
 
 // 이름으로 찾기. 건물은 이름, 가게는 '층/이름'. 화장실처럼 같은 이름이 여러 곳이면 다 담긴다.
 const places = {};
@@ -203,6 +207,7 @@ const pick = (btn, key) => {
 const floorBtns = document.getElementById('floors');
 const panel = document.getElementById('floor');
 const layers = {}; // 층 id -> 그 층 실내 그림
+let afterFloor = () => {}; // 층이 바뀐 뒤 할 일(길 안내가 채운다)
 const setFloor = id => {
   const f = FLOORS.find(f => f.id === id);
   if (!f) return;
@@ -215,6 +220,7 @@ const setFloor = id => {
   layers[id] ||= drawFloor(id);
   for (const f in layers) layers[f].style.display = f === id ? '' : 'none';
   pick(null, ''); // 다른 층에서 고른 표시를 지운다
+  afterFloor();
 
   panel.replaceChildren();
   add(add(panel, 'h2', f.name), 'small', f.note);
@@ -295,3 +301,170 @@ fill('now', EVENT_LIST.filter(e => isOpen(e, today)).sort(byStart), '지금 열�
   e => e.end === today ? ['오늘', '까지'] : [day(e.end), '까지']);
 fill('soon', EVENT_LIST.filter(e => e.start > today).sort(byStart), '예정된 행사가 없어요.',
   e => [day(e.start), e.end === e.start ? '하루만' : '~ ' + day(e.end)]);
+
+// ---- 찾기와 길 안내 ----
+// 통로 그래프의 한 점에서 모든 점까지 가장 짧은 거리(다익스트라). nb[i] = [[이웃, 거리], ...]
+// 점이 천 개 안쪽이라 가장 가까운 점을 그냥 훑어서 찾는다.
+const reach = (nb, from) => {
+  const dist = nb.map(() => Infinity), prev = nb.map(() => -1), done = nb.map(() => false);
+  dist[from] = 0;
+  for (;;) {
+    let u = -1;
+    for (let i = 0; i < nb.length; i++) if (!done[i] && dist[i] < Infinity && (u < 0 || dist[i] < dist[u])) u = i;
+    if (u < 0) return { dist, prev };
+    done[u] = true;
+    for (const [v, d] of nb[u]) if (dist[u] + d < dist[v]) { dist[v] = dist[u] + d; prev[v] = u; }
+  }
+};
+{ // 자가 점검: 0-1-2로 돌아가는 길(2)이 0-2 직통(5)보다 짧다. 3은 못 간다.
+  const r = reach([[[1, 1], [2, 5]], [[0, 1], [2, 1]], [[0, 5], [1, 1]], []], 0);
+  console.assert(r.dist[2] === 2 && r.prev[2] === 1 && r.dist[3] === Infinity, 'reach 자가 점검 실패');
+}
+
+const finder = document.getElementById('finder');
+if (finder) {
+  const [toInput, fromInput] = finder.querySelectorAll('input');
+  const gps = finder.querySelector('button'), hits = document.getElementById('hits'), guide = document.getElementById('guide');
+  const squash = s => s.toLowerCase().replace(/\s/g, '');
+
+  // 찾을 수 있는 것 전부: 층별 가게 목록의 이름 + 약도에 자리가 있는 것(시설, 칸 번호, 안내 표시) + 층 안내에 적은 시설(전시홀 등)
+  const things = [];
+  for (const f of FLOORS) {
+    const seen = new Set();
+    const put = (name, cat) => { if (!seen.has(name)) { seen.add(name); things.push({ name, cat, floor: f, key: f.id + '/' + name, squashed: squash(name) }); } };
+    for (const [cat, names] of Object.entries(STORES[f.id] || {})) for (const name of names) put(name, cat);
+    for (const s of byFloor[f.id] || []) put(s.name, s.kind);
+    for (const g of f.groups) if (!g.info) for (const [name] of g.items) put(name, g.title); // info: 설명만 적은 묶음은 뺀다
+  }
+  // 이름 앞쪽에서 맞는 것, 지금 보고 있는 층의 것을 먼저 보여 준다
+  const find = q => {
+    const k = squash(q);
+    return !k ? [] : things.filter(t => t.squashed.includes(k))
+      .sort((a, b) => a.squashed.indexOf(k) - b.squashed.indexOf(k) || (b.floor.id === floor) - (a.floor.id === floor) || a.name.localeCompare(b.name, 'ko'))
+      .slice(0, 30);
+  };
+
+  // 층의 통로 그래프: 토막의 끝점을 점으로, 토막을 이웃으로 만든다. 통로 자료가 없는 층은 null.
+  const graphs = {};
+  const graphOf = id => {
+    if (id in graphs) return graphs[id];
+    const segs = (MAP.walk || {})[id];
+    if (!segs) return graphs[id] = null;
+    const nodes = [], nb = [], ids = new Map();
+    const node = (x, y) => { const k = x + ',' + y; if (!ids.has(k)) { ids.set(k, nodes.length); nodes.push({ x, y }); nb.push([]); } return ids.get(k); };
+    for (const [x1, y1, x2, y2] of segs) { const a = node(x1, y1), b = node(x2, y2), d = Math.hypot(x2 - x1, y2 - y1); nb[a].push([b, d]); nb[b].push([a, d]); }
+    return graphs[id] = { nodes, nb };
+  };
+  const gap = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const nearest = (g, p) => g.nodes.reduce((best, n, i) => gap(n, p) < gap(g.nodes[best], p) ? i : best, 0);
+  // 출발 점들에서 도착 점들까지 가장 짧은 길. 통로 자료가 있으면 통로를 따라가고, 없으면 직선이다.
+  const routeOn = (id, froms, tos) => {
+    const g = graphOf(id);
+    let best = null;
+    for (const a of froms) {
+      const near = g && nearest(g, a), all = g && reach(g.nb, near);
+      for (const b of tos) {
+        let pts = [a, b], len = gap(a, b), along = false;
+        const t = g && nearest(g, b);
+        if (g && all.dist[t] < Infinity) {
+          const mid = [];
+          for (let u = t; u >= 0; u = all.prev[u]) mid.unshift(g.nodes[u]);
+          pts = [a, ...mid, b]; len = gap(a, g.nodes[near]) + all.dist[t] + gap(g.nodes[t], b); along = true;
+        }
+        if (!best || len < best.len) best = { pts, len, along, a, b };
+      }
+    }
+    return best;
+  };
+  const compass = (a, b) => ['동', '남동', '남', '남서', '서', '북서', '북', '북동'][(Math.round(Math.atan2(b.y - a.y, b.x - a.x) / (Math.PI / 4)) + 8) % 8] + '쪽';
+  const meters = len => { const m = Math.round(len * MAP.unit / 10) * 10; return m < 10 ? '바로 근처' : `약 ${m}m`; };
+  const center = (pts, minZoom) => { // 점들이 다 보이게 키우고 가운데로 옮긴다
+    const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+    const w = Math.max(...xs) - Math.min(...xs), h = Math.max(...ys) - Math.min(...ys);
+    const least = MAP.width / 12; // 한 점만 볼 때도 주변이 보이게, 너무 바짝 키우지 않는다
+    setZoom(Math.max(minZoom, Math.min(MAX_ZOOM, .7 * Math.min(MAP.width / Math.max(w, least), MAP.height / Math.max(h, least)))));
+    scroller.scrollTo((Math.min(...xs) + w / 2) / MAP.width * svg.clientWidth - scroller.clientWidth / 2,
+      (Math.min(...ys) + h / 2) / MAP.height * svg.clientHeight - scroller.clientHeight / 2);
+  };
+
+  let dest = null, start = null; // 고른 도착지와 출발지. 출발지는 GPS 위치({x, y, gps})일 수도 있다.
+  let routeFloor = null;         // 길과 출발 점을 그려 둔 층
+  afterFloor = () => { for (const n of [routeLine, me, meRing]) n.setAttribute('display', floor === routeFloor ? '' : 'none'); };
+  const go = () => {
+    routeFloor = null;
+    routeLine.removeAttribute('points');
+    for (const n of [me, meRing]) n.setAttribute('cx', -99);
+    if (!dest) {
+      if (start?.gps) { // 도착지 없이 내 위치만 본다
+        routeFloor = floor;
+        for (const n of [me, meRing]) { n.setAttribute('cx', start.x); n.setAttribute('cy', start.y); }
+        meRing.setAttribute('r', start.gps / MAP.unit);
+        afterFloor();
+        center([start], 4);
+      }
+      guide.textContent = start ? `출발지: ${start.name}${start.gps ? ` (오차 약 ${start.gps}m)` : ''}. 도착지를 찾아 고르면 길을 알려 줘요.` : '';
+      return;
+    }
+    setFloor(dest.floor.id);
+    const tos = places[dest.key] || [];
+    if (!tos.length) { guide.textContent = `${dest.name}: ${dest.floor.name}. 약도에 자리 정보는 없어요.`; return; }
+    pick(null, dest.key);
+    const froms = !start ? [] : start.gps ? [start] : places[start.key] || [];
+    if (!froms.length) {
+      guide.textContent = `${dest.name}: ${dest.floor.name}${tos.length > 1 ? `에 ${tos.length}곳` : ''}.` + (start ? ' 출발지는 약도에 자리 정보가 없어서 길은 못 그려요.' : ' 출발지를 고르면 길을 알려 줘요.');
+      center(tos, 4);
+      return;
+    }
+    if (!start.gps && start.floor.id !== dest.floor.id) {
+      guide.textContent = `출발지는 ${start.floor.name}, 도착지는 ${dest.floor.name}이에요. 에스컬레이터나 엘리베이터로 ${dest.floor.name}까지 간 다음 약도의 빨간 곳을 찾아가세요.`;
+      center(tos, 4);
+      return;
+    }
+    const r = routeOn(dest.floor.id, froms, tos);
+    routeFloor = dest.floor.id;
+    routeLine.setAttribute('points', r.pts.map(p => p.x + ',' + p.y).join(' '));
+    for (const n of [me, meRing]) { n.setAttribute('cx', r.a.x); n.setAttribute('cy', r.a.y); }
+    meRing.setAttribute('r', start.gps ? start.gps / MAP.unit : 0);
+    afterFloor();
+    center(r.pts, 2);
+    guide.textContent = `${start.name}에서 ${dest.name}까지 ${r.along ? '통로를 따라' : '직선으로'} ${meters(r.len)}`
+      + (MAP.geo ? `, ${compass(r.a, r.b)}이에요.` : '예요.')
+      + (start.gps ? ` GPS 위치는 실내에서 ${start.gps}m쯤 틀릴 수 있고, 지금 보는 층에 있다고 보고 계산했어요.` : '');
+  };
+
+  // 검색창에 글자를 치면 후보를 보여 주고, 후보를 고르면 onPick에 넘긴다
+  const suggest = (input, onPick) => {
+    hits.replaceChildren();
+    if (!input.value.trim()) return onPick(null);
+    for (const t of find(input.value)) {
+      const btn = add(add(hits, 'li'), 'button');
+      btn.type = 'button';
+      add(btn, 'b', t.name);
+      add(btn, 'small', t.floor.name);
+      add(btn, 'small', places[t.key] ? t.cat : t.cat + ', 자리 정보 없음');
+      btn.onclick = () => { input.value = t.name; hits.replaceChildren(); onPick(t); };
+    }
+    if (!hits.children.length) add(hits, 'li', '찾는 곳이 없어요. 다른 이름으로 찾아보세요.');
+  };
+  toInput.oninput = () => suggest(toInput, t => { dest = t; go(); });
+  fromInput.oninput = () => suggest(fromInput, t => { start = t; go(); });
+  finder.onsubmit = e => e.preventDefault();
+
+  // GPS는 바깥 지도가 있는 장소에서만 쓴다. 실내와 지하에서는 잘 안 잡혀서, 안 되면 직접 고르라고 알려 준다.
+  gps.hidden = !MAP.geo || !navigator.geolocation;
+  gps.onclick = () => {
+    guide.textContent = '위치를 찾는 중이에요…';
+    navigator.geolocation.getCurrentPosition(pos => {
+      const [south, north, west, east] = MAP.geo, c = pos.coords;
+      const p = { name: '내 위치', gps: Math.round(c.accuracy), x: (c.longitude - west) / (east - west) * MAP.width, y: (north - c.latitude) / (north - south) * MAP.height };
+      if (p.x < 0 || p.x > MAP.width || p.y < 0 || p.y > MAP.height) { guide.textContent = '지금 위치가 이 약도 밖이에요. 출발지를 직접 찾아 골라 주세요.'; return; }
+      start = p;
+      fromInput.value = p.name;
+      hits.replaceChildren();
+      go();
+    }, err => {
+      guide.textContent = err.code === 1 ? '위치 권한이 꺼져 있어요. 브라우저 설정에서 켜거나, 출발지를 직접 찾아 골라 주세요.'
+        : '위치를 찾지 못했어요. 지하에서는 GPS가 잘 안 잡혀요. 출발지를 직접 찾아 골라 주세요.';
+    }, { enableHighAccuracy: true, timeout: 10000 });
+  };
+}

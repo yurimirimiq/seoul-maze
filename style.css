@@ -6,6 +6,7 @@
   --rule: #d5d9e2;
   --exit: #ffd400;
   --here: #e5342b;
+  --me: #1f6feb;
   --map: #f4f5f7;
   --bldg: #e2e6ee;
   --date-col: 4.25rem;
@@ -44,6 +45,22 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 70
 .lines .line { display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%; font-size: .875rem; font-weight: 600;
   color: var(--line-ink, var(--ink)); background: var(--line); }
 
+/* 찾기와 길 안내 */
+.finder { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 8px; }
+.finder label { display: grid; grid-template-columns: 2.25rem 1fr; align-items: center; font-size: .875rem; font-weight: 600; }
+.finder label:first-child { grid-column: 1 / -1; }
+.finder input { min-width: 0; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 8px; font: inherit; font-weight: 400; color: var(--ink); background: #fff; }
+.finder button { padding: 0 14px; border: 0; border-radius: 8px; font: inherit; font-size: .875rem; font-weight: 600; color: #fff; background: var(--ink); }
+.hits { max-height: 17rem; overflow-y: auto; margin-bottom: 8px; border-radius: 8px; background: #fff; }
+.hits:empty { display: none; }
+.hits li { border-bottom: 1px solid var(--rule); padding: 10px 12px; font-size: .9375rem; color: var(--muted); }
+.hits li:has(button) { padding: 0; }
+.hits button { display: flex; align-items: baseline; gap: 8px; width: 100%; padding: 10px 12px; border: 0; font: inherit; text-align: left; color: var(--ink); background: none; }
+.hits b { margin-right: auto; font-weight: 600; }
+.hits small { flex: none; font-size: .8125rem; color: var(--muted); }
+.guide { margin: 0 0 10px; padding: 10px 12px; border-left: 4px solid var(--me); font-size: .9375rem; font-weight: 500; background: #fff; }
+.guide:empty { display: none; }
+
 /* 약도: 밝은 회색 바탕에 흰 길, 옅은 건물. 색은 가게 점과 출구, 고른 곳에만 쓴다 */
 .mapwrap { position: relative; }
 .mapscroll { display: grid; align-content: safe center; overflow: auto; overscroll-behavior: contain; touch-action: pan-x pan-y; /* 두 손가락 확대는 app.js가 맡는다 */ border: 1px solid var(--rule); border-radius: 12px; background: var(--map); }
@@ -78,6 +95,9 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 70
 #map .exit { fill: var(--exit); stroke: none; }
 #map circle.line { fill: var(--line); }
 #pin { fill: var(--here); stroke: #fff; stroke-width: .8; }
+#route { fill: none; stroke: var(--me); stroke-width: calc(var(--u, .293) * 4px); stroke-linecap: round; stroke-linejoin: round; }
+#me { fill: var(--me); stroke: #fff; stroke-width: .5; }
+#mering { fill: var(--me); fill-opacity: .15; stroke: none; }
 #ping { fill: none; stroke: var(--here); stroke-width: .6; transform-box: fill-box; transform-origin: center; transform: scale(calc(var(--u, .293) / .293)); }
 #ping.go { animation: ping .9s ease-out; }
 @keyframes ping { from { opacity: 1; } to { transform: scale(calc(4 * var(--u, .293) / .293)); opacity: 0; } }

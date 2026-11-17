@@ -4,7 +4,7 @@
 새 장소 추가: 아래 PLACES에 항목을 하나 더 넣는다.
 
 - 바깥 지도(건물, 길, 지하철 출구): 오픈스트리트맵에서 받는다. © OpenStreetMap contributors (ODbL)
-- 실내(칸 모양, 가게 위치): <장소>/shapes.tsv, <장소>/poi.tsv를 읽는다. 둘은 공식 실내 지도의 좌표(1칸 = 10cm)로 적혀 있다.
+- 실내(칸 모양, 가게 위치, 통로 선): <장소>/shapes.tsv, poi.tsv, paths.tsv를 읽는다. 셋 다 실내 지도의 좌표(1칸 = 10cm)로 적혀 있다.
 
 장소는 두 가지다.
 - bbox가 있는 곳(코엑스): 바깥 지도를 그리고 그 위에 실내를 돌리고 옮겨서 얹는다.
@@ -154,7 +154,9 @@ def outdoor(cfg):
     def indoor_xy(px, py):
         return k * (cos * px - sin * py) + dx, k * (sin * px + cos * py) + dy
 
-    data = {"width": WIDTH, "height": height, "main": buildings[0]["name"], "roads": roads,
+    # unit: 약도 1칸이 몇 m인지(거리 계산용). geo: 약도 네 변의 위도·경도(GPS 위치를 약도에 찍을 때 쓴다).
+    data = {"width": WIDTH, "height": height, "unit": round(unit, 3), "geo": [south, north, west, east],
+            "main": buildings[0]["name"], "roads": roads,
             "roadNames": [{k: v for k, v in n.items() if k != "len"} for _, n in sorted(names.items())],
             "blocks": blocks, "buildings": buildings, "spots": spots}
     return data, indoor_xy
@@ -169,7 +171,9 @@ def indoor_only(cfg):
         return (px - left) * k, (py - top) * k
 
     spots = [{"name": name, "x": round(indoor_xy(*at)[0], 2), "y": round(indoor_xy(*at)[1], 2)} for name, at in cfg["labels"].items()]
-    data = {"width": WIDTH, "height": round((bottom - top) * k), "roads": [], "roadNames": [], "blocks": [], "buildings": [], "spots": spots}
+    # 실내 좌표 1칸 = 10cm로 보고 약도 1칸의 길이를 적는다. 바깥 지도가 없어서 geo(위도·경도)는 없다.
+    data = {"width": WIDTH, "height": round((bottom - top) * k), "unit": round(0.1 / k, 3),
+            "roads": [], "roadNames": [], "blocks": [], "buildings": [], "spots": spots}
     return data, indoor_xy
 
 
@@ -216,6 +220,11 @@ def main(place):
         assert 0 <= s["x"] <= WIDTH and 0 <= s["y"] <= data["height"], f"범위 밖: {s['name']}"
 
     data["shapes"] = shapes
+    # walk: 층 -> 길찾기용 통로 토막 [[x1, y1, x2, y2], ...]. paths.tsv가 있는 곳만 통로를 따라 길을 안내한다.
+    walk = {}
+    for floor, x1, y1, x2, y2 in rows("paths.tsv"):
+        walk.setdefault(floor, []).append([*place_xy(x1, y1), *place_xy(x2, y2)])
+    data["walk"] = walk
     with open(f"{place}/map.js", "w", encoding="utf-8") as f:
         f.write("// make_map.py가 만든 파일. 손으로 고치지 말고 make_map.py를 다시 돌린다.\n")
         f.write("// 건물과 길: © OpenStreetMap contributors (ODbL). 실내: shapes.tsv, poi.tsv 참고.\n")
