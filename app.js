@@ -12,15 +12,16 @@ console.assert(overlaps({ x: 0, y: 0, w: 10, h: 10 }, { x: 9, y: 9, w: 5, h: 5 }
 // 가게 종류 -> 칸 색. 종류 이름은 장소마다 달라서(패션의류, 롯데백화점 쇼핑 ...) 들어 있는 낱말로 고른다.
 // 앞에 있을수록 약도에서 이름표가 먼저 나온다. 어디에도 안 맞으면 시설 색(회색)이다.
 const TINTS = [
-  [/엔터|문화/, '#7c5cd6'], [/라이프|리빙/, '#2f9a6a'], [/잡화|액세서리/, '#5a66cf'], [/패션|의류|쇼핑/, '#3d7fd0'],
-  [/레스토랑|카페|먹을/, '#ef8a2b'], [/뷰티|화장품/, '#dc5a9a'], [/홈|퍼니싱/, '#9a7440'], [/키즈|아동/, '#d9a514'],
-  [/서비스/, '#5b6b85'], [/가게/, '#8f86c4'],
+  [/엔터|문화|갤러리|서점|취미/, '#7c5cd6'], [/라이프|리빙/, '#2f9a6a'],
+  [/잡화|액세서리|ACC|소품|핸드백|구두|슈즈|주얼리|러기지|타이/, '#5a66cf'],
+  [/패션|의류|쇼핑|캐주얼|컨템포러리|클래식|뷰틱|RTW|디자이너|골프|스포츠|란제리|모피|커리어|엘레강스|트래디셔널|퍼니싱/, '#3d7fd0'],
+  [/레스토랑|카페|먹을|식당|푸드|델리|스위트|그로서리|수산|축산|청과|채소|양곡|조리|음료|주류|냉동/, '#ef8a2b'],
+  [/뷰티|화장품/, '#dc5a9a'], [/홈|가전|키친|테이블|디지털/, '#9a7440'], [/키즈|아동|신생아|완구|캐릭터/, '#d9a514'],
+  [/서비스|편의|휴게|상품권|건강|전체|테넌트/, '#5b6b85'], [/가게/, '#8f86c4'],
 ];
 const rank = kind => { const i = TINTS.findIndex(([re]) => re.test(kind)); return i < 0 ? TINTS.length : i; };
 const tint = kind => TINTS[rank(kind)]?.[1] || '#9aa3b5';
 const minor = s => s.kind === '편의시설' || s.kind === '안내'; // 가게가 아닌 것. 이름을 흐리게 쓴다.
-// 역 이름 -> 노선 번호. 새 장소를 넣을 때 그 장소의 역을 여기에 더한다. 노선 색은 style.css에 있다.
-const LINES = { '삼성역': '2', '봉은사역': '9' };
 
 // 약도 그리기: 길 -> 건물 -> 실내(층별) -> 늘 보이는 이름과 표지판 순서로 쌓는다
 const svg = document.getElementById('map');
@@ -31,7 +32,7 @@ const el = (tag, attrs, text, parent = svg) => {
   return parent.appendChild(n);
 };
 svg.setAttribute('viewBox', `0 0 ${MAP.width} ${MAP.height}`);
-for (const r of MAP.roads) el('polyline', { points: r.pts, 'stroke-width': r.w, class: r.w >= 2.5 ? 'road big' : 'road' });
+for (const r of MAP.roads) el('polyline', { points: r.pts, 'stroke-width': r.w, class: r.big ? 'road big' : 'road' });
 for (const pts of MAP.blocks) el('polygon', { points: pts, class: 'block' });
 for (const b of MAP.buildings) el('polygon', { points: b.pts });
 const indoor = el('g'); // 층별 실내 그림이 들어갈 자리
@@ -67,11 +68,12 @@ const drawFloor = id => {
 
 const signs = []; // 늘 보이는 것들이 차지한 자리. 가게 이름표가 이 위에 겹치지 않게 한다.
 for (const b of MAP.buildings) { el('text', { x: b.x, y: b.y, class: 'bname' }, b.name); signs.push({ x: b.x, y: b.y, name: b.name }); }
+const stations = new Set(); // 역 이름은 출구가 여럿이어도 한 번만 쓴다
 for (const s of MAP.spots.filter(s => !s.floor)) {
   const exit = s.name.match(/^(.+역) (.+)번 출구$/);
-  if (!exit || !LINES[exit[1]]) { el('text', { x: s.x, y: s.y, class: 'bname' }, s.name); signs.push(s); continue; }
+  if (!exit || !s.line) { el('text', { x: s.x, y: s.y, class: 'bname' }, s.name); signs.push(s); continue; }
   // 지하철 출구는 실제 표지판처럼 그린다: 노선 색 동그라미 + 노란 출구 번호
-  const line = LINES[exit[1]];
+  const line = s.line;
   const below = s.y > MAP.height / 2; // 이름이 건물과 겹치지 않게 남쪽 절반은 아래에, 북쪽 절반은 위에 쓴다
   const w = 2 + exit[2].length * 1.7;
   const left = s.x - (4.6 + w) / 2;
@@ -80,7 +82,8 @@ for (const s of MAP.spots.filter(s => !s.floor)) {
   el('text', { x: left + 2, y: s.y + 1, class: 'sign l' + line }, line, g);
   el('rect', { x: left + 4.6, y: s.y - 2, width: w, height: 4, rx: .6, class: 'exit' }, '', g);
   el('text', { x: left + 4.6 + w / 2, y: s.y + 1, class: 'sign' }, exit[2], g);
-  el('text', { x: s.x, y: below ? s.y + 5.6 : s.y - 3.2, class: 'fixed' }, exit[1], g);
+  if (!stations.has(exit[1])) el('text', { x: s.x, y: below ? s.y + 5.6 : s.y - 3.2, class: 'fixed' }, exit[1], g);
+  stations.add(exit[1]);
   signs.push({ x: s.x, y: s.y, name: exit[1] + '  ' });
 }
 const ping = el('circle', { id: 'ping', r: 2.4, display: 'none' });

@@ -40,9 +40,6 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 70
 .places li { border-bottom: 1px solid var(--rule); }
 .places .row { display: flex; align-items: center; gap: 12px; padding: 16px 8px; text-decoration: none; }
 .places .name { margin-right: auto; font-size: 1.5rem; font-weight: 700; line-height: 1.2; letter-spacing: -.03em; }
-.places .soon { color: var(--muted); }
-.places .soon .lines { opacity: .45; }
-.places small { font-size: .8125rem; color: var(--muted); }
 .lines { display: flex; gap: 4px; }
 .lines .line { display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%; font-size: .875rem; font-weight: 600;
   color: var(--line-ink, var(--ink)); background: var(--line); }

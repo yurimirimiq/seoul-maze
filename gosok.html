@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="style.css">
+<title>고속터미널 | 패스파인더</title>
+</head>
+<body>
+<a class="brand wordmark" href="./" aria-label="패스파인더 홈">pathf<span class="i">ı</span>nder</a>
+<h1>고속터미널</h1>
+
+<div class="mapwrap">
+  <div id="mapscroll" class="mapscroll"><svg id="map" role="img" aria-label="고속터미널 일대 약도"></svg></div>
+  <div id="floors" class="floors" role="group" aria-label="층 선택"></div>
+  <div class="zoom" role="group" aria-label="약도 크기">
+    <button aria-label="약도 키우기">+</button>
+    <button aria-label="약도 줄이기">−</button>
+  </div>
+</div>
+<p class="caption">고속터미널은 건물 안 가게 자리 자료를 구하지 못해서, 바깥 약도와 신세계백화점 강남점의 층별 매장 이름만 나와요. 층 버튼을 누르면 아래 목록이 그 층으로 바뀌어요. 지하상가 가게는 <a href="https://gotomall.kr/map">고투몰 공식 안내도</a>에서 볼 수 있어요.</p>
+
+<section id="floor"></section>
+
+<footer>
+  매장 목록은 2026-11-17에 <a href="https://www.shinsegae.com/store/floor.do?storeCd=SC00002">신세계백화점 강남점 층별 안내</a>에서 확인한 내용이에요. 바뀔 수 있으니 가기 전에 공식 안내를 확인하세요.
+  건물과 길 © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors.
+</footer>
+
+<script src="gosok/map.js"></script>
+<script src="gosok/floors.js"></script>
+<script src="gosok/stores.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -33,15 +33,35 @@ PLACES = {
             74056386: "도심공항터미널",
             74056390: "인터컨티넨탈",
         },
-        # OSM 지점(node) id -> 화면에 쓸 이름. '○○역 N번 출구' 꼴이면 출구 표지판으로 그려진다.
+        # 지하철 출구. OSM 지점(node) id -> ('○○역 N번 출구', 노선 번호). 출구 표지판으로 그려진다.
         "spots": {
-            3404873904: "삼성역 5·6번 출구",  # 5번 출구 위치. 6번은 바로 옆이라 한 점으로 표시
-            3824607465: "봉은사역 7번 출구",
+            3404873904: ("삼성역 5·6번 출구", "2"),  # 5번 출구 위치. 6번은 바로 옆이라 한 점으로 표시
+            3824607465: ("봉은사역 7번 출구", "9"),
         },
         # 실내 좌표를 바깥 지도에 얹는 값: (돌리는 각도, 가로 이동, 세로 이동).
         # 실내 자료에는 위도·경도가 없어서, 별마당도서관 건물과 눈에 띄는 가게 20여 곳의 실제 위치에 겹치게 맞췄다.
         # 맞춘 결과 북쪽 끝 가게는 봉은사역 7번 출구, 남동쪽 끝 맥도날드는 삼성역 5·6번 출구 옆에 온다. 오차는 대개 3~10m다.
         "poi_transform": (-114.24, 32.71, 110.69),
+    },
+    "gosok": {
+        "bbox": (37.5018, 37.5090, 126.9995, 127.0095),
+        # 지하상가(고투몰)는 땅 밑으로 길게 깔려 있어서 다른 건물 밑에 그려지게 맨 앞에 둔다
+        "buildings": {
+            1354860678: "고투몰(지하상가)",
+            159117108: "신세계백화점",
+            356127040: "센트럴시티(호남선)",
+            309352819: "고속버스터미널(경부선)",
+            593858530: "파미에스테이션",
+            413372929: "뉴코아아울렛",
+        },
+        # 노선마다 귀퉁이 출구만 골랐다(3호선 1번, 7호선 3·5번, 9호선 8-1번). 다 넣으면 표지판끼리 겹친다.
+        # 역 이름은 첫 출구 옆에 한 번만 쓰이므로, 주변이 비어 있는 5번 출구를 맨 앞에 둔다.
+        "spots": {
+            3146849639: ("고속터미널역 5번 출구", "7"),
+            3146849471: ("고속터미널역 3번 출구", "7"),
+            3146856929: ("고속터미널역 1번 출구", "3"),
+            3146857129: ("고속터미널역 8-1번 출구", "9"),
+        },
     },
     "jamsil": {
         # 실내 좌표에서 화면에 넣을 범위 (왼쪽, 위, 오른쪽, 아래)
@@ -106,9 +126,10 @@ def outdoor(cfg):
         if e["type"] != "way" or kind not in ROAD_WIDTH_M:
             continue
         w = round(ROAD_WIDTH_M[kind] / unit, 1)
-        roads.append({"w": w, "pts": line(e)})
+        big = kind in ("trunk", "primary")  # 큰길은 색을 달리 칠하고 이름을 쓴다
+        roads.append({"w": w, "big": big, "pts": line(e)})
         name = e["tags"].get("name")
-        if name and w >= 2.5:
+        if name and big and not name.endswith(("고가도로", "지하도로", "지하차도")):  # 같은 길 위아래로 겹치는 구조물 이름은 뺀다
             pts = [xy(p["lat"], p["lon"]) for p in e["geometry"]]
             for (x1, y1), (x2, y2) in zip(pts, pts[1:]):
                 mx, my, length = (x1 + x2) / 2, (y1 + y2) / 2, math.hypot(x2 - x1, y2 - y1)
@@ -119,11 +140,11 @@ def outdoor(cfg):
     roads.sort(key=lambda r: (r["w"], r["pts"]))
 
     spots = []
-    for osm_id, name in cfg["spots"].items():
+    for osm_id, (name, line) in cfg["spots"].items():
         x, y = xy(found[osm_id]["lat"], found[osm_id]["lon"])
-        spots.append({"name": name, "x": x, "y": y})
+        spots.append({"name": name, "x": x, "y": y, "line": line})
 
-    deg, dx, dy = cfg["poi_transform"]
+    deg, dx, dy = cfg.get("poi_transform", (0, 0, 0))  # 실내 자료가 없는 곳은 안 쓴다
     cos, sin, k = math.cos(math.radians(deg)), math.sin(math.radians(deg)), 0.1 / unit
 
     def indoor_xy(px, py):
