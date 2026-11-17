@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pathfinder 피치덱</title>
+<!-- claude.ai 슬라이드에서 2026-11-17에 옮긴 피치덱. 원본을 고치면 이 파일도 다시 옮겨야 한다. 장마다 1920x1080 판이고 화면에 맞춰 줄여 보여 준다. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 색: 남색 #18244a, 밝은 바탕 #f4f5f7, 흐린 글자 #5b6480, 선 #d5d9e2, 도착점 빨강 #e5342b */
+body { font-family: 'Inter', 'Noto Sans KR', Arial, sans-serif; color: #18244a; }
+section { padding: 128px 128px 160px; display: flex; flex-direction: column; counter-increment: page; }
+.light { background: #f4f5f7; }
+.dark { background: #18244a; color: #f1f3f8; }
+.cover { padding: 128px; }
+
+h1 { font-size: 96px; font-weight: 700; line-height: 1.15; letter-spacing: -1.5px; }
+h2 { font-size: 64px; font-weight: 700; line-height: 1.2; letter-spacing: -1px; }
+h3 { font-size: 44px; font-weight: 700; line-height: 1.2; }
+p { font-size: 32px; line-height: 1.5; }
+.eyebrow { font-size: 24px; font-weight: 500; line-height: 1.3; color: #5b6480; }
+.dark .eyebrow { color: #b9c1d9; }
+.soft { color: #5b6480; }
+.dark .soft { color: #b9c1d9; }
+.small { font-size: 24px; line-height: 1.5; }
+.spacer { flex: 1; }
+
+.head { display: flex; flex-direction: column; gap: 16px; }
+.body { padding-top: 64px; display: flex; flex-direction: column; }
+
+/* 아래 띠: 로고 이름과 쪽 번호 */
+.foot { position: absolute; left: 128px; bottom: 64px; width: 1664px; height: 32px; display: flex; justify-content: space-between; align-items: center; }
+.foot-l { font-size: 24px; font-weight: 700; line-height: 1.3; color: #5b6480; }
+.pg { font-size: 24px; line-height: 1.3; color: #5b6480; }
+.pg::after { content: counter(page); }
+.dark .foot-l { color: #b9c1d9; }
+.dark .pg { color: #b9c1d9; }
+
+/* 워드마크: i의 점만 빨간 도착점 */
+.wm { display: flex; align-items: flex-end; }
+.wm-t { font-size: 168px; font-weight: 700; line-height: 1; letter-spacing: -6.7px; }
+.wm-i { display: flex; flex-direction: column; align-items: center; margin-left: 4px; }
+.wm-dot { width: 30px; height: 30px; border-radius: 15px; background: #e5342b; margin-bottom: -44px; }
+.lockup { display: flex; flex-direction: column; gap: 36px; }
+.tag { font-size: 44px; font-weight: 500; line-height: 1.3; }
+.cover-map { position: absolute; right: 128px; top: 128px; width: 640px; height: 824px; object-fit: contain; }
+
+/* 세 칸 */
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; }
+.card { background: #fbfbfc; border: 2px solid #d5d9e2; border-radius: 24px; padding: 44px 40px; display: flex; flex-direction: column; justify-content: space-between; gap: 20px; min-height: 470px; box-sizing: border-box; }
+.card-t { display: flex; flex-direction: column; gap: 20px; }
+.num { font-size: 24px; font-weight: 700; line-height: 1.3; color: #5b6480; }
+
+/* 장소 칸: 남색 판에 미니 약도 */
+.place { display: flex; flex-direction: column; gap: 8px; }
+.plate { background: #18244a; border-radius: 24px; padding: 28px; display: flex; justify-content: center; margin-bottom: 16px; }
+.plate-img { width: 477px; height: 340px; object-fit: contain; }
+
+/* 제품: 폰 화면과 순서 */
+.phone { position: absolute; right: 128px; top: 128px; width: 442px; height: 760px; box-sizing: border-box; border: 6px solid #18244a; border-radius: 44px; overflow: hidden; background: #f1f2f4; }
+.phone-img { width: 430px; height: 748px; object-fit: cover; }
+.narrow { width: 1080px; }
+.steps { display: flex; flex-direction: column; gap: 40px; }
+.step { display: flex; gap: 32px; align-items: flex-start; }
+.step-n { width: 64px; height: 64px; border-radius: 32px; background: #18244a; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.step-nt { font-size: 32px; font-weight: 700; line-height: 1; color: #f1f3f8; }
+.step-t { display: flex; flex-direction: column; gap: 8px; }
+
+/* 숫자 */
+.stat { display: flex; flex-direction: column; gap: 4px; border-top: 4px solid #18244a; padding-top: 20px; }
+.stat-n { font-size: 96px; font-weight: 700; line-height: 1.1; letter-spacing: -2px; }
+.tbl { width: 1664px; font-size: 32px; color: #18244a; margin-top: 40px; }
+.note { font-size: 24px; line-height: 1.3; color: #5b6480; margin-top: 24px; }
+
+/* 만드는 방식: 흐름 */
+.flow { display: flex; align-items: center; gap: 16px; }
+.box { width: 356px; box-sizing: border-box; align-self: stretch; background: #fbfbfc; border: 2px solid #d5d9e2; border-radius: 24px; padding: 32px 28px; display: flex; flex-direction: column; gap: 12px; }
+.box-on { background: #18244a; border: 2px solid #18244a; }
+.box-on .box-h { color: #f1f3f8; }
+.box-on .box-p { color: #b9c1d9; }
+.box-on .num { color: #b9c1d9; }
+.box-p { font-size: 24px; line-height: 1.5; color: #5b6480; }
+.arrow { width: 48px; height: 24px; background: #5b6480; flex-shrink: 0; }
+.facts { padding-top: 56px; }
+.fact { display: flex; flex-direction: column; gap: 8px; }
+
+/* 다음 단계 */
+.col { border-top: 4px solid #d5d9e2; padding-top: 28px; display: flex; flex-direction: column; gap: 20px; }
+.col-now { border-top: 4px solid #18244a; }
+.pill { font-size: 24px; font-weight: 700; line-height: 1.3; background: #e2e6ee; color: #18244a; padding: 6px 18px; border-radius: 20px; align-self: flex-start; }
+.pill-now { background: #18244a; color: #f1f3f8; }
+.items { display: flex; flex-direction: column; gap: 12px; }
+
+/* 여기부터는 넘겨 보는 화면을 위한 것 */
+html, body { height: 100%; margin: 0; overflow: hidden; background: #0d142b; counter-reset: page; }
+#stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; }
+section { position: absolute; inset: 0; box-sizing: border-box; overflow: hidden; visibility: hidden; } /* display:none으로 숨기면 쪽 번호가 안 세어진다 */
+section.on { visibility: visible; }
+section :where(h1, h2, h3, p, table) { margin: 0; }
+x-shape { display: block; }
+x-shape[kind="arrow-right"] { clip-path: polygon(0 30%, 60% 30%, 60% 0, 100% 50%, 60% 100%, 60% 70%, 0 70%); }
+.tbl { border-collapse: collapse; }
+.tbl th, .tbl td { text-align: left; padding: 14px 0; border-bottom: 2px solid #d5d9e2; }
+.phone-img { object-position: top; }
+#count { position: fixed; right: 12px; bottom: 8px; font: 14px/1 Inter, sans-serif; color: #b9c1d9; }
+</style>
+</head>
+<body>
+<div id="stage">
+<section id="cover" class="dark cover" data-transition="fade">
+<img class="cover-map" src="coex/thumb.svg" alt="코엑스 지하 1층 실내 약도">
+<p class="eyebrow">서비스 소개</p>
+<div class="spacer"></div>
+<div class="lockup">
+<div class="wm">
+<p class="wm-t">pathf</p>
+<div class="wm-i"><div class="wm-dot"></div><p class="wm-t">ı</p></div>
+<p class="wm-t">nder</p>
+</div>
+<p class="tag">서울 3대 미로, 이제 지도가 있어요.</p>
+</div>
+<div class="spacer"></div>
+<p class="eyebrow">2026년 11월</p>
+</section>
+<section id="problem" class="light" data-transition="fade">
+<div class="head">
+<p class="eyebrow">문제</p>
+<h2>갈 때마다 길을 잃는 곳이 있습니다</h2>
+</div>
+<div class="body">
+<div class="grid3">
+<div class="place">
+<div class="plate"><img class="plate-img" src="coex/thumb.svg" alt="코엑스 실내 약도"></div>
+<h3>코엑스</h3>
+<p>6개 층 · 매장 324곳</p>
+<p class="small soft">스타필드 코엑스몰과 전시장</p>
+</div>
+<div class="place">
+<div class="plate"><img class="plate-img" src="jamsil/thumb.svg" alt="잠실역 실내 약도"></div>
+<h3>잠실역</h3>
+<p>15개 층 · 가게 1,401곳</p>
+<p class="small soft">롯데백화점, 롯데월드몰, 캐슬플라자</p>
+</div>
+<div class="place">
+<div class="plate"><img class="plate-img" src="gosok/thumb.svg" alt="고속터미널 실내 약도"></div>
+<h3>고속터미널</h3>
+<p>13개 층 · 지하상가 칸 609개</p>
+<p class="small soft">지하상가, 신세계백화점, 고속버스터미널</p>
+</div>
+</div>
+</div>
+<div class="foot"><p class="foot-l">pathfinder</p><div class="pg"></div></div>
+</section>
+<section id="why" class="light" data-transition="fade">
+<div class="head">
+<p class="eyebrow">원인</p>
+<h2>안내는 있지만 흩어져 있습니다</h2>
+</div>
+<div class="body">
+<div class="grid3">
+<div class="card">
+<p class="num">01</p>
+<div class="card-t">
+<h3>건물마다 다른 안내도</h3>
+<p class="soft">고속터미널 한 곳만 해도 운영하는 곳이 넷이라, 안내도도 네 군데에 따로 있습니다.</p>
+</div>
+</div>
+<div class="card">
+<p class="num">02</p>
+<div class="card-t">
+<h3>지하에서 약한 GPS</h3>
+<p class="soft">실내와 지하에서는 위치가 잘 안 잡히고 수십 m씩 틀립니다.</p>
+</div>
+</div>
+<div class="card">
+<p class="num">03</p>
+<div class="card-t">
+<h3>따로 찾는 팝업 정보</h3>
+<p class="soft">지금 열리는 행사와 팝업은 지도와 다른 곳에서 다시 찾아야 합니다.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="foot"><p class="foot-l">pathfinder</p><div class="pg"></div></div>
+</section>
+<section id="solution" class="dark" data-transition="fade">
+<p class="eyebrow">해결</p>
+<div class="spacer"></div>
+<div class="lockup">
+<h1>층, 가게, 길을<br>약도 한 장에 모았습니다</h1>
+<p class="soft">pathfinder는 복잡한 실내 공간의 지도와 그 안에서 열리는 팝업을 한곳에서 보여 주는 서비스입니다.</p>
+</div>
+<div class="foot"><p class="foot-l">pathfinder</p><div class="pg"></div></div>
+</section>
+<section id="product" class="light" data-transition="fade">
+<div class="phone"><img class="phone-img" src="docs/coex.jpg" alt="pathfinder 코엑스 화면: 지하 1층 약도와 가게 이름"></div>
+<div class="head narrow">
+<p class="eyebrow">제품</p>
+<h2>화면의 주인공은 약도입니다</h2>
+</div>
+<div class="body narrow">
+<div class="steps">
+<div class="step">
+<div class="step-n"><p class="step-nt">1</p></div>
+<div class="step-t"><h3>찾기</h3><p class="soft">돋보기를 눌러 가게 이름, 시설, 칸 번호를 칩니다.</p></div>
+</div>
+<div class="step">
+<div class="step-n"><p class="step-nt">2</p></div>
+<div class="step-t"><h3>층 이동</h3><p class="soft">고르면 그 층으로 바뀌고 자리가 빨갛게 표시됩니다.</p></div>
+</div>
+<div class="step">
+<div class="step-n"><p class="step-nt">3</p></div>
+<div class="step-t"><h3>길 안내</h3><p class="soft">출발지를 고르면 통로를 따라 파란 길과 거리가 나옵니다.</p></div>
+</div>
+</div>
+</div>
+<div class="foot"><p class="foot-l">pathfinder</p><div class="pg"></div></div>
+</section>
+<section id="status" class="light" data-transition="fade">
+<div class="head">
+<p class="eyebrow">현황</p>
+<h2>세 곳이 모두 열려 있습니다</h2>
+</div>
+<div class="body">
+<div class="grid3">
+<div class="stat"><p class="stat-n">3</p><p class="soft">장소</p></div>
+<div class="stat"><p class="stat-n">34</p><p class="soft">층</p></div>
+<div class="stat"><p class="stat-n">2,796</p><p class="soft">가게 이름</p></div>
+</div>
+<table class="tbl">
+<tr><th style="width:18%">장소</th><th style="width:14%">층</th><th style="width:34%">가게</th><th>길 안내</th></tr>
+<tr><td>코엑스</td><td>6개</td><td>324곳</td><td>통로를 따라</td></tr>
+<tr><td>잠실역</td><td>15개</td><td>1,401곳</td><td>직선</td></tr>
+<tr><td>고속터미널</td><td>13개</td><td>1,071곳, 지하상가 칸 609개</td><td>지하상가는 통로, 그 밖은 직선</td></tr>
+</table>
+<p class="note">2026년 11월 17일 기준. 운영사 공식 층별 안내와 공공데이터에서 받은 자료입니다.</p>
+</div>
+<div class="foot"><p class="foot-l">pathfinder</p><div class="pg"></div></div>
+</section>
+<section id="how" class="light" data-transition="fade">
+<div class="head">
+<p class="eyebrow">만드는 방식</p>
+<h2>장소 하나는 폴더 하나입니다</h2>
+</div>
+<div class="body">
+<div class="flow">
+<div class="box">
+<p class="num">01</p>
+<h3 class="box-h">공개 자료</h3>
+<p class="box-p">운영사 공식 층별 안내, 공공데이터, 오픈스트리트맵</p>
+</div>
+<x-shape kind="arrow-right" class="arrow"></x-shape>
+<div class="box">
+<p class="num">02</p>
+<h3 class="box-h">스크립트</h3>
+<p class="box-p">파이썬 스크립트 6개가 자료를 약도 데이터로 바꿉니다</p>
+</div>
+<x-shape kind="arrow-right" class="arrow"></x-shape>
+<div class="box">
+<p class="num">03</p>
+<h3 class="box-h">장소 폴더</h3>
+<p class="box-p">약도, 층, 가게 목록이 폴더 하나에 담깁니다</p>
+</div>
+<x-shape kind="arrow-right" class="arrow"></x-shape>
+<div class="box box-on">
+<p class="num">04</p>
+<h3 class="box-h">같은 화면</h3>
+<p class="box-p">모든 장소가 화면 코드 하나를 같이 씁니다</p>
+</div>
+</div>
+<div class="grid3 facts">
+<div class="fact"><h3>서버 없음</h3><p class="soft">정적 파일만으로 돌아갑니다.</p></div>
+<div class="fact"><h3>화면 코드 하나</h3><p class="soft">장소 이름이 코드에 들어 있지 않습니다.</p></div>
+<div class="fact"><h3>여섯 단계</h3><p class="soft">새 장소를 여는 순서가 정리돼 있습니다.</p></div>
+</div>
+</div>
+<div class="foot"><p class="foot-l">pathfinder</p><div class="pg"></div></div>
+</section>
+<section id="roadmap" class="light" data-transition="fade">
+<div class="head">
+<p class="eyebrow">다음 단계</p>
+<h2>미로에서 백화점과 쇼핑몰로 넓힙니다</h2>
+</div>
+<div class="body">
+<div class="grid3">
+<div class="col col-now">
+<p class="pill pill-now">지금</p>
+<h3>서울 3대 미로</h3>
+<div class="items">
+<p class="soft">코엑스, 잠실역, 고속터미널</p>
+<p class="soft">가게 찾기와 길 안내</p>
+<p class="soft">코엑스 전시장 행사 목록</p>
+</div>
+</div>
+<div class="col">
+<p class="pill">다음</p>
+<h3>백화점과 복합쇼핑몰</h3>
+<div class="items">
+<p class="soft">같은 방식으로 장소 추가</p>
+<p class="soft">몰 안 팝업 정보</p>
+</div>
+</div>
+<div class="col">
+<p class="pill">그다음</p>
+<h3>더 꼼꼼한 길 안내</h3>
+<div class="items">
+<p class="soft">층을 오가는 길 안내</p>
+<p class="soft">전시장 안 홀 위치</p>
+<p class="soft">잠실의 통로를 따라가는 길</p>
+</div>
+</div>
+</div>
+</div>
+<div class="foot"><p class="foot-l">pathfinder</p><div class="pg"></div></div>
+</section>
+<section id="revenue" class="light" data-transition="fade">
+<div class="head">
+<p class="eyebrow">수익 모델 · 가설</p>
+<h2>수익은 세 군데에서 나올 수 있습니다</h2>
+</div>
+<div class="body">
+<div class="grid3">
+<div class="card">
+<p class="num">01</p>
+<div class="card-t">
+<h3>팝업·행사 노출</h3>
+<p class="soft">팝업 주최사가 약도 위에 자리와 기간을 올리고 노출 비용을 냅니다.</p>
+</div>
+</div>
+<div class="card">
+<p class="num">02</p>
+<div class="card-t">
+<h3>운영사 제휴</h3>
+<p class="soft">몰과 백화점에 약도와 길 안내 화면을 공급하고 이용료를 받습니다.</p>
+</div>
+</div>
+<div class="card">
+<p class="num">03</p>
+<div class="card-t">
+<h3>가게 소식</h3>
+<p class="soft">가게가 자기 칸에 소식과 할인을 올리는 구독 상품입니다.</p>
+</div>
+</div>
+</div>
+<p class="note">아직 검증하지 않은 가설입니다. 금액과 순서는 정하지 않았습니다.</p>
+</div>
+<div class="foot"><p class="foot-l">pathfinder</p><div class="pg"></div></div>
+</section>
+<section id="team" class="light" data-transition="fade">
+<div class="head">
+<p class="eyebrow">팀</p>
+<h2>혼자 만들고 있습니다</h2>
+</div>
+<div class="body">
+<div class="stat">
+<p class="stat-n">강유림</p>
+<p class="soft">인하대학교 인공지능공학과 · 개인 프로젝트</p>
+</div>
+<div class="grid3 facts">
+<div class="fact"><h3>기획과 디자인</h3><p class="soft">약도가 주인공인 화면을 정하고 다듬습니다.</p></div>
+<div class="fact"><h3>개발</h3><p class="soft">화면 코드와 약도를 만드는 스크립트를 짭니다.</p></div>
+<div class="fact"><h3>자료</h3><p class="soft">공식 안내와 공공데이터를 모아 약도로 옮깁니다.</p></div>
+</div>
+</div>
+<div class="foot"><p class="foot-l">pathfinder</p><div class="pg"></div></div>
+</section>
+<section id="needs" class="light" data-transition="fade">
+<div class="head">
+<p class="eyebrow">필요한 것</p>
+<h2>널리 공개하려면 세 가지가 필요합니다</h2>
+</div>
+<div class="body">
+<div class="grid3">
+<div class="card">
+<p class="num">01</p>
+<div class="card-t">
+<h3>운영사의 허락</h3>
+<p class="soft">가게 칸 모양은 운영사의 도면입니다. 널리 공개하기 전에 허락을 구해야 합니다.</p>
+</div>
+</div>
+<div class="card">
+<p class="num">02</p>
+<div class="card-t">
+<h3>자료 새로 받기</h3>
+<p class="soft">가게와 행사 자료는 2026년 11월 17일에 받은 것입니다. 꾸준히 새로 받는 길이 필요합니다.</p>
+</div>
+</div>
+<div class="card">
+<p class="num">03</p>
+<div class="card-t">
+<h3>[요청하는 것]</h3>
+<p class="soft">[투자 금액, 제휴, 지원처럼 이 자리에서 요청할 내용을 적어 주세요]</p>
+</div>
+</div>
+</div>
+</div>
+<div class="foot"><p class="foot-l">pathfinder</p><div class="pg"></div></div>
+</section>
+<section id="close" class="dark cover">
+<p class="eyebrow">고맙습니다</p>
+<div class="spacer"></div>
+<div class="lockup">
+<div class="wm">
+<p class="wm-t">pathf</p>
+<div class="wm-i"><div class="wm-dot"></div><p class="wm-t">ı</p></div>
+<p class="wm-t">nder</p>
+</div>
+<p class="tag">서울 3대 미로, 이제 지도가 있어요.</p>
+</div>
+<div class="spacer"></div>
+<p class="eyebrow">강유림 · [연락처]</p>
+</section>
+</div>
+<p id="count" aria-live="polite"></p>
+<script>
+// 넘기기: 좌우 화살표 키, 화면 왼쪽·오른쪽 누르기, 손가락으로 밀기. 주소 끝의 #3은 3번째 장.
+const slides = [...document.querySelectorAll('section')], stage = document.getElementById('stage'), count = document.getElementById('count');
+let now = 0, touchX = null;
+const show = n => {
+  now = Math.max(0, Math.min(slides.length - 1, n));
+  slides.forEach((s, i) => s.classList.toggle('on', i === now));
+  count.textContent = `${now + 1} / ${slides.length}`;
+  history.replaceState(null, '', '#' + (now + 1));
+};
+const fit = () => { stage.style.transform = `translate(-50%, -50%) scale(${Math.min(innerWidth / 1920, innerHeight / 1080)})`; };
+addEventListener('resize', fit);
+addEventListener('keydown', e => {
+  if (['ArrowRight', 'PageDown', ' '].includes(e.key)) show(now + 1);
+  if (['ArrowLeft', 'PageUp'].includes(e.key)) show(now - 1);
+});
+addEventListener('click', e => show(now + (e.clientX > innerWidth / 2 ? 1 : -1)));
+addEventListener('touchstart', e => { touchX = e.touches[0].clientX; });
+addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchX;
+  if (Math.abs(dx) > 40) { e.preventDefault(); show(now + (dx < 0 ? 1 : -1)); } // 밀었으면 이어서 오는 누르기는 막는다
+}, { passive: false });
+count.hidden = location.search === '?still'; // 장마다 그림으로 뽑을 때는 쪽 표시를 숨긴다
+fit();
+show((parseInt(location.hash.slice(1)) || 1) - 1);
+</script>
+</body>
+</html>
