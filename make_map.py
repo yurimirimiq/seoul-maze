@@ -11,9 +11,9 @@
 - frame이 있는 곳(잠실): 바깥 지도 없이 실내 지도만 그린다. 공식 실내 지도가 건물들을 실제 위치와 다르게 벌려 놓아서
   바깥 지도에 맞출 수 없을 때 쓴다.
 """
+import glob
 import json
 import math
-import os
 import sys
 import time
 import urllib.error
@@ -182,9 +182,8 @@ def main(place):
     data, indoor_xy = outdoor(cfg) if "bbox" in cfg else indoor_only(cfg)
     spots = data["spots"]
 
-    def rows(name):
-        path = f"{place}/{name}"
-        return [r.rstrip("\n").split("\t") for r in open(path, encoding="utf-8") if not r.startswith("#")] if os.path.exists(path) else []
+    def rows(name):  # shapes.tsv와 shinsegae.shapes.tsv처럼 끝이 같은 파일을 모두 읽는다(고속터미널은 지하상가와 신세계 자료가 따로 있다)
+        return [r.rstrip("\n").split("\t") for path in sorted(glob.glob(f"{place}/*{name}")) for r in open(path, encoding="utf-8") if not r.startswith("#")]
 
     def place_xy(px, py):  # 가게 칸은 몇 m짜리라 소수 둘째 자리까지 남긴다
         x, y = indoor_xy(float(px), float(py))

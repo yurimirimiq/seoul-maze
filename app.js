@@ -366,7 +366,8 @@ if (finder) {
       for (const b of tos) {
         let pts = [a, b], len = gap(a, b), along = false;
         const t = g && nearest(g, b);
-        if (g && all.dist[t] < Infinity) {
+        // 통로까지 걸어가는 거리가 직선 거리보다 길면 통로가 없는 곳끼리라는 뜻이라 직선으로 둔다(고속터미널 지하 1층은 통로 자료가 지하상가에만 있다)
+        if (g && all.dist[t] < Infinity && gap(a, g.nodes[near]) + gap(g.nodes[t], b) < len) {
           const mid = [];
           for (let u = t; u >= 0; u = all.prev[u]) mid.unshift(g.nodes[u]);
           pts = [a, ...mid, b]; len = gap(a, g.nodes[near]) + all.dist[t] + gap(g.nodes[t], b); along = true;
