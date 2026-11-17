@@ -105,7 +105,7 @@ const add = (parent, tag, text, cls) => {
 const scroller = document.getElementById('mapscroll');
 const [zoomIn, zoomOut] = document.querySelectorAll('.zoom button');
 scroller.style.aspectRatio = Math.min(MAP.width / MAP.height, 1); // 가로로 긴 약도(잠실)도 볼 자리는 정사각형만큼 준다
-const MAX_ZOOM = 16;
+const MAX_ZOOM = 32; // 지하상가 칸은 4m 남짓이라 이만큼 키워야 번호가 다 보인다
 let zoom = 1, floor, picked = [];
 
 // 지금 층의 가게 이름표 가운데 서로 겹치지 않는 것만 보여 준다. 키울수록 더 많이 보인다.
