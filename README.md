@@ -1,5 +1,7 @@
 # 패스파인더 (pathfinder)
 
+**[피치덱 보기 (10장)](https://claude.ai/artifact/QYWtdXBo1rJ9773Btuy9Jy)**
+
 서울의 복잡한 실내 공간에서 길을 잃지 않게 도와주는 서비스.
 
 ## 왜 만드나
