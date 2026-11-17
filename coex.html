@@ -13,24 +13,18 @@
 <a class="brand wordmark" href="./" aria-label="패스파인더 홈">pathf<span class="i">ı</span>nder</a>
 <h1>코엑스</h1>
 
-<svg id="map" role="img" aria-label="코엑스 일대 약도"></svg>
-<p class="caption">땅 위 건물 모양이에요. 코엑스몰은 대부분 이 건물들 아래 지하 1층에 있어요.</p>
+<div class="mapwrap">
+  <svg id="map" role="img" aria-label="코엑스 일대 약도"></svg>
+  <div id="floors" class="floors" role="group" aria-label="층 선택"></div>
+</div>
+<p class="caption">땅 위 건물 모양 위에 고른 층의 장소를 점으로 찍어요. 지하 1층 가게는 오픈스트리트맵에 층이 적힌 곳만 나와요.</p>
+
+<section id="floor" aria-live="polite"></section>
 
 <h2>지금 열리는 행사</h2>
 <ul id="now" class="events"></ul>
 <h2>곧 열리는 행사</h2>
 <ul id="soon" class="events"></ul>
-
-<details>
-  <summary>전시장 편의시설</summary>
-  <ul>
-    <li><b>종합안내데스크</b>: 1층 동문. 휴대폰 충전도 돼요.</li>
-    <li><b>물품보관소</b>: 1층 A홀 신한은행 옆 에스컬레이터 앞, B홀 안내데스크 옆 에스컬레이터 앞.</li>
-    <li><b>의무실</b>: 1층 서문 옆.</li>
-    <li><b>휠체어 대여</b>: 1층 서문 옆 안전상황실, 동문 안내데스크. 오전 8시 30분 ~ 오후 6시, 무료(신분증 필요).</li>
-    <li><b>무슬림 기도실</b>: 3층 E홀 근처.</li>
-  </ul>
-</details>
 
 <footer>
   행사와 시설 정보는 2026-11-17에 <a href="https://www.coex.co.kr/event/full-schedules/">coex.co.kr</a>에서 확인한 내용이에요. 바뀔 수 있으니 가기 전에 공식 안내를 확인하세요.
@@ -39,6 +33,7 @@
 </footer>
 
 <script src="coex/map.js"></script>
+<script src="coex/floors.js"></script>
 <script src="coex/events.js"></script>
 <script src="app.js"></script>
 </body>

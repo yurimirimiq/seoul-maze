@@ -31,15 +31,21 @@ PLACES = {
             74056398: ("오크우드", False),
             884138635: ("세븐럭 카지노", False),
         },
-        # OSM 지점(node) id -> 화면에 쓸 이름. '○○역 N번 출구' 꼴이면 출구 표지판으로 그려진다.
+        # OSM 지점(node) id -> 화면에 쓸 이름. 어느 층에서나 보인다. '○○역 N번 출구' 꼴이면 출구 표지판으로 그려진다.
         "spots": {
             3404873904: "삼성역 5·6번 출구",  # 5번 출구 위치. 6번은 바로 옆이라 한 점으로 표시
             3824607465: "봉은사역 7번 출구",
-            2676488130: "아쿠아리움",
-            3453733093: "메가박스",
         },
+        # 범위 안에서 OSM level 태그가 이 값인 가게와 시설을 자동으로 모아 그 층에 넣는다.
+        # shortcut: 0과 1은 지도 그린 사람마다 1층인지 2층인지 달라서 지하(-1)만 쓴다, 다른 층은 확인된 자료가 생기면 넣는다.
+        "levels": {"-1": "B1"},
+        "rename": {"코엑스 아쿠아리움 (COEX Aquarium)": "아쿠아리움", "MEGABOX": "메가박스"},
     },
 }
+
+# OSM 종류 태그 -> 층별 목록의 묶음 이름
+KINDS = {"aquarium": "볼거리", "cinema": "볼거리", "books": "서점", "cafe": "카페",
+         "restaurant": "먹을 곳", "fast_food": "먹을 곳", "clothes": "패션", "shoes": "패션"}
 
 WIDTH = 100  # 약도 가로 길이. 세로는 실제 비율대로 계산한다.
 M_PER_LAT = 111_000
@@ -55,13 +61,14 @@ def main(place):
     def xy(lat, lon):
         return round((lon - west) * M_PER_LON / unit, 1), round((north - lat) * M_PER_LAT / unit, 1)
 
-    query = "[out:json][timeout:60];(way(id:%s);node(id:%s););out geom;" % (
-        ",".join(map(str, cfg["buildings"])), ",".join(map(str, cfg["spots"])))
+    query = "[out:json][timeout:60];(way(id:%s);node(id:%s););out geom;nwr[level][name](%s,%s,%s,%s);out center;" % (
+        ",".join(map(str, cfg["buildings"])), ",".join(map(str, cfg["spots"])), south, west, north, east)
     req = urllib.request.Request(
         "https://overpass-api.de/api/interpreter",
         data=urllib.parse.urlencode({"data": query}).encode(),
         headers={"User-Agent": "make_map.py"})
-    found = {e["id"]: e for e in json.load(urllib.request.urlopen(req, timeout=90))["elements"]}
+    elements = json.load(urllib.request.urlopen(req, timeout=90))["elements"]
+    found = {e["id"]: e for e in elements if "geometry" in e or e["id"] in cfg["spots"]}
     missing = (set(cfg["buildings"]) | set(cfg["spots"])) - set(found)
     assert not missing, f"OSM에서 못 찾은 id: {missing}"
 
@@ -76,6 +83,15 @@ def main(place):
     for osm_id, name in cfg["spots"].items():
         x, y = xy(found[osm_id]["lat"], found[osm_id]["lon"])
         spots.append({"name": name, "x": x, "y": y})
+    for e in elements:  # 층 태그가 있는 가게와 시설
+        tags = e.get("tags", {})
+        kind = tags.get("shop") or tags.get("amenity") or tags.get("tourism") or tags.get("leisure")
+        if "geometry" in e or e["id"] in cfg["spots"] or tags.get("level") not in cfg["levels"] or not kind:
+            continue
+        x, y = xy(*[(e.get("center") or e)[k] for k in ("lat", "lon")])
+        spots.append({"name": cfg["rename"].get(tags["name"], tags["name"]), "x": x, "y": y,
+                      "floor": cfg["levels"][tags["level"]], "kind": KINDS.get(kind, "그 밖")})
+    spots.sort(key=lambda s: (s.get("floor", ""), s.get("kind", ""), s["name"]))  # 결과가 매번 같게
     for i in buildings + spots:
         assert 0 <= i["x"] <= WIDTH and 0 <= i["y"] <= height, f"범위 밖: {i['name']}"
 

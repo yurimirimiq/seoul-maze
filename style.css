@@ -1,4 +1,4 @@
-/* 지하철 안내 표지판에서 가져온 색: 남색 판, 노란 길 안내, 빨간 현위치 */
+/* 지하철 안내 표지판에서 가져온 색: 남색 글자, 노란 출구 번호, 빨간 현위치 */
 :root {
   --floor: #f1f2f4;
   --ink: #18244a;
@@ -6,8 +6,9 @@
   --rule: #d5d9e2;
   --exit: #ffd400;
   --here: #e5342b;
-  --bldg: #2c3c74;
-  --bldg-main: #4560b0;
+  --map: #f9fafb;
+  --bldg: #e6e9ef;
+  --bldg-main: #d3dae8;
   --date-col: 4.25rem;
 }
 /* 지하철 노선 색. 글자색은 노선 색 위에서 읽히는 쪽으로 고른다. */
@@ -47,21 +48,41 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 60
 .lines .line { display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%; font-size: .875rem; font-weight: 600;
   color: var(--line-ink, var(--ink)); background: var(--line); }
 
-/* 약도 */
-#map { display: block; width: 100%; border-radius: 6px; background: var(--ink); }
+/* 약도: 밝은 바탕에 옅은 건물, 글자와 점만 남색 */
+.mapwrap { position: relative; }
+#map { display: block; width: 100%; border: 1px solid var(--rule); border-radius: 8px; background: var(--map); }
 #map polygon { fill: var(--bldg); }
 #map polygon.main { fill: var(--bldg-main); }
-#map text { font-size: 3px; font-weight: 600; text-anchor: middle; fill: #fff; paint-order: stroke; stroke: var(--ink); stroke-width: .8; }
-#map .spot { fill: #fff; }
+#map text { font-size: 3px; font-weight: 600; text-anchor: middle; fill: var(--ink); paint-order: stroke; stroke: var(--map); stroke-width: .9; }
+#map .spot { fill: var(--ink); stroke: var(--map); stroke-width: .4; }
 #map .exit { fill: var(--exit); }
 #map circle.line { fill: var(--line); }
 #map text.sign { fill: var(--line-ink, var(--ink)); stroke: none; font-size: 2.8px; }
-#map text.north { font-size: 2.6px; stroke: none; }
+#map .north { fill: var(--muted); stroke: none; font-size: 2.6px; }
 #pin { fill: var(--here); stroke: #fff; stroke-width: .8; }
 #ping { fill: none; stroke: var(--here); stroke-width: .6; transform-box: fill-box; transform-origin: center; }
 #ping.go { animation: ping .9s ease-out; }
 @keyframes ping { from { transform: scale(1); opacity: 1; } to { transform: scale(4); opacity: 0; } }
 .caption { margin: 8px 0 0; font-size: .8125rem; color: var(--muted); }
+
+/* 층 버튼: 엘리베이터처럼 위층이 위에 */
+.floors { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; overflow: hidden;
+  border: 1px solid var(--rule); border-radius: 8px; background: #fff; }
+.floors button { width: 2.5rem; height: 2.5rem; border: 0; border-top: 1px solid var(--rule); font: inherit; font-size: .875rem; font-weight: 600; color: var(--ink); background: none; }
+.floors button:first-child { border-top: 0; }
+.floors button[aria-pressed="true"] { color: #fff; background: var(--ink); }
+.floors button:focus-visible { outline-offset: -3px; }
+
+/* 층별 목록 */
+#floor h2 small { margin-left: 8px; font-size: .8125rem; font-weight: 400; color: var(--muted); }
+.rows li { display: grid; grid-template-columns: var(--date-col) 1fr; column-gap: 10px; padding: 12px 8px; border-bottom: 1px solid var(--rule); }
+.rows .kind { font-size: .8125rem; line-height: 1.85; color: var(--muted); }
+.rows p { margin: 0; font-weight: 500; }
+.rows p + p { margin-top: 6px; }
+.rows p small { display: block; font-size: .8125rem; font-weight: 400; color: var(--muted); }
+.rows div:has(button) { display: flex; flex-wrap: wrap; gap: 6px; }
+.rows button { padding: 6px 12px; border: 1px solid var(--rule); border-radius: 999px; font: inherit; font-size: .875rem; font-weight: 500; color: var(--ink); background: #fff; }
+.rows button[aria-pressed="true"] { border-color: var(--here); color: #fff; background: var(--here); }
 
 /* 행사 시간표 */
 .events li { border-bottom: 1px solid var(--rule); border-left: 4px solid transparent; padding-bottom: 10px; }
@@ -76,9 +97,6 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 60
 .events a { display: inline-block; margin-left: calc(var(--date-col) + 18px); padding: 4px 0; font-size: .8125rem; color: var(--muted); }
 .events li:not(:has(button)) { padding: 12px 8px; color: var(--muted); }
 
-details { margin-top: 36px; border-top: 2px solid var(--ink); padding-top: 10px; }
-summary { font-size: 1.0625rem; font-weight: 600; }
-details li { margin-top: 8px; font-size: .9375rem; }
 footer { margin-top: 32px; font-size: .75rem; color: var(--muted); }
 
 @media (prefers-reduced-motion: reduce) { #ping.go { animation: none; } }
