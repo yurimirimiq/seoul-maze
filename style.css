@@ -57,7 +57,8 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 70
 .search[open] summary::before { content: '×'; }
 .finder { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 6px; padding: 8px; border: 1px solid var(--rule); border-radius: 8px; background: #fff; }
 .finder label { display: grid; grid-template-columns: 2.25rem 1fr; align-items: center; font-size: .875rem; font-weight: 600; }
-.finder label:first-child { grid-column: 1 / -1; }
+.finder > input, .finder label:last-child { grid-column: 1 / -1; }
+.route summary { margin-left: calc(2.5rem + 6px); } /* 돋보기 오른쪽에 나란히. 상자 둘은 같은 자리에 겹쳐 있고 한 번에 하나만 열린다 */
 .finder input { min-width: 0; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 8px; font: inherit; font-weight: 400; color: var(--ink); background: #fff; }
 .finder button { padding: 0 14px; border: 0; border-radius: 8px; font: inherit; font-size: .875rem; font-weight: 600; color: #fff; background: var(--ink); }
 .hits { max-height: min(17rem, 34svh); overflow-y: auto; margin-top: 6px; border: 1px solid var(--rule); border-radius: 8px; background: #fff; }

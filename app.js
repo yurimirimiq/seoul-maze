@@ -363,13 +363,19 @@ const reach = (nb, from) => {
   console.assert(r.dist[2] === 2 && r.prev[2] === 1 && r.dist[3] === Infinity, 'reach 자가 점검 실패');
 }
 
-const finder = document.getElementById('finder');
-if (finder) {
-  const [toInput, fromInput] = finder.querySelectorAll('input');
-  const gps = finder.querySelector('button'), hits = document.getElementById('hits'), guide = document.getElementById('guide');
-  const box = finder.parentNode; // 돋보기를 누르면 열리는 상자. 열면 바로 적을 수 있게 하고, 고르고 나면 약도가 보이게 닫는다.
-  box.ontoggle = () => box.open && toInput.focus();
-  box.onkeydown = e => { if (e.key === 'Escape') box.open = false; };
+// 위치 찾기(돋보기)와 길찾기는 따로 연다. 사용자가 도착·출발 칸이 한데 있으니 헷갈린다고 해서 나눴다.
+const [findBox, routeBox] = document.querySelectorAll('details.search');
+if (routeBox) { // 폰에 옛 화면 파일이 남아 있으면 길찾기 상자가 없다. 그때는 건너뛴다
+  const findInput = findBox.querySelector('input'), [fromInput, toInput] = routeBox.querySelectorAll('input');
+  const gps = routeBox.querySelector('button'), guide = document.getElementById('guide');
+  for (const box of [findBox, routeBox]) box.onkeydown = e => { if (e.key === 'Escape') box.open = false; };
+  findBox.ontoggle = () => findBox.open && findInput.focus(); // 열면 바로 적을 수 있게
+  routeBox.ontoggle = () => { // 찾아 둔 곳이 있으면 도착 칸에 넣어 주고, 빈 칸부터 적게 한다
+    if (!routeBox.open) return;
+    fromInput.value = start?.name || '';
+    toInput.value = dest?.name || '';
+    (start && !dest ? toInput : fromInput).focus();
+  };
   const squash = s => s.toLowerCase().replace(/\s/g, '');
 
   // 찾을 수 있는 것 전부: 층별 가게 목록의 이름 + 약도에 자리가 있는 것(시설, 칸 번호, 안내 표시) + 층 안내에 적은 시설(전시홀 등)
@@ -448,7 +454,7 @@ if (finder) {
         afterFloor();
         center([start], 4);
       }
-      guide.textContent = start ? `출발지: ${start.name}${start.gps ? ` (오차 약 ${start.gps}m)` : ''}. 도착지를 찾아 고르면 길을 알려 줘요.` : '';
+      guide.textContent = start ? `출발: ${start.name}${start.gps ? ` (오차 약 ${start.gps}m)` : ''}` : '';
       return;
     }
     setFloor(dest.floor.id);
@@ -457,7 +463,7 @@ if (finder) {
     pick(null, dest.key);
     const froms = !start ? [] : start.gps ? [start] : places[start.key] || [];
     if (!froms.length) {
-      guide.textContent = `${dest.name}: ${dest.floor.name}${tos.length > 1 ? `에 ${tos.length}곳` : ''}.` + (start ? ' 출발지는 약도에 자리 정보가 없어서 길은 못 그려요.' : ' 출발지를 고르면 길을 알려 줘요.');
+      guide.textContent = `${dest.name}: ${dest.floor.name}${tos.length > 1 ? `에 ${tos.length}곳` : ''}.` + (start ? ' 출발지는 약도에 자리 정보가 없어서 길은 못 그려요.' : '');
       center(tos, 4);
       return;
     }
@@ -480,6 +486,7 @@ if (finder) {
 
   // 검색창에 글자를 치면 후보를 보여 주고, 후보를 고르면 onPick에 넘긴다
   const suggest = (input, onPick) => {
+    const hits = input.closest('details').querySelector('.hits');
     hits.replaceChildren();
     if (!input.value.trim()) return onPick(null);
     for (const t of find(input.value)) {
@@ -488,13 +495,16 @@ if (finder) {
       add(btn, 'b', t.name);
       add(btn, 'small', t.floor.name);
       add(btn, 'small', places[t.key] ? t.cat : t.cat + ', 자리 정보 없음');
-      btn.onclick = () => { input.value = t.name; hits.replaceChildren(); box.open = false; onPick(t); };
+      btn.onclick = () => { input.value = t.name; hits.replaceChildren(); onPick(t); };
     }
     if (!hits.children.length) add(hits, 'li', '찾는 곳이 없어요. 다른 이름으로 찾아보세요.');
   };
-  toInput.oninput = () => suggest(toInput, t => { dest = t; go(); });
-  fromInput.oninput = () => suggest(fromInput, t => { start = t; go(); });
-  finder.onsubmit = e => e.preventDefault();
+  // 위치 찾기: 고르면 그 자리만 보여 준다(길은 지운다). 길찾기: 출발과 도착이 다 정해지면 상자를 닫고 길을 보여 준다.
+  const route = () => { if (start && dest) routeBox.open = false; go(); };
+  findInput.oninput = () => suggest(findInput, t => { dest = t; start = null; if (t) findBox.open = false; go(); });
+  fromInput.oninput = () => suggest(fromInput, t => { start = t; route(); });
+  toInput.oninput = () => suggest(toInput, t => { dest = t; route(); });
+  for (const form of document.querySelectorAll('.finder')) form.onsubmit = e => e.preventDefault();
 
   // GPS는 바깥 지도가 있는 장소에서만 쓴다. 실내와 지하에서는 잘 안 잡혀서, 안 되면 직접 고르라고 알려 준다.
   gps.hidden = !MAP.geo || !navigator.geolocation;
@@ -505,10 +515,8 @@ if (finder) {
       const p = { name: '내 위치', gps: Math.round(c.accuracy), x: (c.longitude - west) / (east - west) * MAP.width, y: (north - c.latitude) / (north - south) * MAP.height };
       if (p.x < 0 || p.x > MAP.width || p.y < 0 || p.y > MAP.height) { guide.textContent = '지금 위치가 이 약도 밖이에요. 출발지를 직접 찾아 골라 주세요.'; return; }
       start = p;
-      box.open = false;
       fromInput.value = p.name;
-      hits.replaceChildren();
-      go();
+      route();
     }, err => {
       guide.textContent = err.code === 1 ? '위치 권한이 꺼져 있어요. 브라우저 설정에서 켜거나, 출발지를 직접 찾아 골라 주세요.'
         : '위치를 찾지 못했어요. 지하에서는 GPS가 잘 안 잡혀요. 출발지를 직접 찾아 골라 주세요.';
