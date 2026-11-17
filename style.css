@@ -112,7 +112,6 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 70
 #ping { fill: none; stroke: var(--here); stroke-width: .6; transform-box: fill-box; transform-origin: center; transform: scale(calc(var(--u, .293) / .293)); }
 #ping.go { animation: ping .9s ease-out; }
 @keyframes ping { from { opacity: 1; } to { transform: scale(calc(4 * var(--u, .293) / .293)); opacity: 0; } }
-.caption { margin: 8px 0 0; font-size: .8125rem; color: var(--muted); }
 
 /* 층 버튼: 엘리베이터처럼 위층이 위에 */
 .floors, .zoom { position: absolute; right: 8px; display: flex; flex-direction: column; overflow: hidden;
@@ -144,15 +143,12 @@ body:has(.mapwrap.full) { overflow: hidden; }
 
 /* 가게 목록: 종류별로 접어 두고 하나만 펼친다 */
 #floor h3 { margin: 24px 0 0; padding-bottom: 8px; font-size: .9375rem; font-weight: 600; border-bottom: 1px solid var(--ink); }
-#floor details { border-bottom: 1px solid var(--rule); }
-#floor summary { display: flex; align-items: center; gap: 8px; padding: 12px 8px; font-weight: 500; list-style: none; cursor: pointer; }
-#floor summary i { width: .625rem; height: .625rem; border-radius: 50%; } /* 약도의 점과 같은 색 */
-#floor summary::-webkit-details-marker { display: none; }
-#floor summary small { font-size: .8125rem; font-weight: 400; color: var(--muted); }
-#floor summary::after { content: '+'; margin-left: auto; font-size: 1.125rem; line-height: 1; color: var(--muted); }
-#floor details[open] summary::after { content: '−'; }
-.cols { columns: 2; column-gap: 16px; padding: 0 8px 14px; font-size: .875rem; }
-.cols li { break-inside: avoid; padding: 3px 0; }
+/* 가게 안내판: 왼쪽에 종류(약도의 칸과 같은 색 점), 오른쪽에 가게 이름 */
+.dir { display: grid; grid-template-columns: 6.5rem 1fr; }
+.dir h4, .cols { margin: 0; padding: 9px 8px; border-bottom: 1px solid var(--rule); }
+.dir h4 { display: flex; gap: 6px; font-size: .8125rem; font-weight: 500; line-height: 1.75; color: var(--muted); }
+.dir h4 i { flex: none; width: .5rem; height: .5rem; margin-top: .55em; border-radius: 50%; }
+.cols { display: flex; flex-wrap: wrap; align-content: start; gap: 4px 14px; font-size: .9375rem; }
 .cols button { padding: 0; border: 0; font: inherit; text-align: left; color: var(--ink); background: none; }
 .cols button small { color: var(--muted); }
 .cols button[aria-pressed="true"] { font-weight: 600; color: var(--here); }
@@ -166,7 +162,7 @@ body:has(.mapwrap.full) { overflow: hidden; }
 .date small, .what small { display: block; font-size: .8125rem; color: var(--muted); }
 .what b { display: block; font-weight: 600; line-height: 1.35; }
 .what small span { margin-right: 8px; color: var(--ink); font-weight: 500; }
-.floor { min-width: 2.25rem; padding: 6px 4px; border-radius: 4px; text-align: center; font-size: .875rem; font-weight: 600; line-height: 1.25; color: #fff; background: var(--ink); }
+.floor { font-size: .875rem; font-weight: 600; line-height: 1.6; white-space: nowrap; }
 .events a { display: inline-block; margin-left: calc(var(--date-col) + 18px); padding: 4px 0; font-size: .8125rem; color: var(--muted); }
 .events li:not(:has(button)) { padding: 12px 8px; color: var(--muted); }
 

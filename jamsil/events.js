@@ -6,6 +6,6 @@
 const EVENTS = [
   { cat: '행사', name: '2026 롯데타운 크리스마스 마켓', start: '2026-11-19', end: '2027-01-03', place: '롯데월드타워·몰', url: 'https://www.lwt.co.kr/ko/event/view.do?seq=1719198' },
   { cat: '팝업', name: '홉티미스트 팝업', start: '2026-11-19', end: '2026-12-02', place: '롯데월드몰 무신사 스탠다드 앞 (지하 1층)', at: 'B1/무신사 스탠다드', url: 'https://www.lwt.co.kr/ko/event/view.do?seq=1696884' },
-  { cat: '팝업', name: '조선건어물 팝업', start: '2026-11-03', end: '2026-11-28', place: '롯데월드몰 올리브영 앞 (5층)', at: '5/올리브영', url: 'https://www.lwt.co.kr/ko/event/all.do?category=pop-up' },
-  { cat: '팝업', name: 'CONNECT TO', start: '2026-10-23', end: '2026-11-20', place: '롯데월드몰 CONNECT TO (1층)', at: '1/CONNECT TO (렉서스)', url: 'https://www.lwt.co.kr/ko/event/all.do?category=pop-up' },
+  { cat: '팝업', name: '조선건어물 팝업', start: '2026-11-03', end: '2026-11-28', place: '롯데월드몰 올리브영 앞 (5층)', at: '5/올리브영' },
+  { cat: '팝업', name: 'CONNECT TO', start: '2026-10-23', end: '2026-11-20', place: '롯데월드몰 CONNECT TO (1층)', at: '1/CONNECT TO (렉서스)' },
 ];

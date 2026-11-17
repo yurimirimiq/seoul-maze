@@ -253,22 +253,19 @@ const setFloor = id => {
     const box = add(li, 'div');
     for (const [name, where] of g.items) add(add(box, 'p', name), 'small', where);
   }
-  // 가게: 종류별로 접어 두고 하나씩 펼친다. 이름을 누르면 약도에 표시된다.
+  // 가게: 왼쪽에 종류, 오른쪽에 가게 이름을 늘어놓은 안내판 모양. 가게가 한두 곳뿐인 종류가 많아서 접어 두면 누를 일만 늘어난다. 이름을 누르면 약도에 표시된다.
   const cats = Object.entries(STORES[id] || {});
   const total = cats.reduce((n, [, names]) => n + names.length, 0);
   const amenities = [...new Set((byFloor[id] || []).filter(s => s.kind === '편의시설').map(s => s.name))];
   if (amenities.length) cats.push(['편의시설', amenities]);
   if (!cats.length) return;
   add(panel, 'h3', total ? `가게 ${total}곳` : '편의시설');
-  for (const [i, [cat, names]] of cats.entries()) {
-    const box = add(panel, 'details');
-    box.setAttribute('name', 'cat'); // 같은 name끼리는 하나만 펼쳐진다
-    box.open = i === 0;
-    const head = add(box, 'summary');
+  const dir = add(panel, 'div', '', 'dir');
+  for (const [cat, names] of cats) {
+    const head = add(dir, 'h4');
     add(head, 'i').style.background = tint(cat);
     head.append(cat);
-    add(head, 'small', names.length);
-    const list = add(box, 'ul', '', 'cols');
+    const list = add(dir, 'ul', '', 'cols');
     for (const name of names) {
       const li = add(list, 'li');
       const key = id + '/' + name;
@@ -316,10 +313,10 @@ if (closeMap) { // 폰에 옛 화면 파일이 남아 있으면 닫기 버튼이
 // 행사 목록. 행사 자료(EVENTS)가 없는 장소는 건너뛴다.
 const today = new Date().toLocaleDateString('sv'); // 'sv' 형식 = 내 시간대 기준 YYYY-MM-DD
 const day = d => d.slice(5).replace('-', '.');
-const fill = (id, events, emptyText, dateText) => {
+const fill = (id, events, dateText) => {
   const list = document.getElementById(id);
   if (!list) return;
-  if (!events.length) add(list, 'li', emptyText);
+  list.hidden = list.previousElementSibling.hidden = !events.length; // 없으면 제목까지 숨긴다. '없어요'라고 적어 두는 것보다 깔끔하다
   for (const e of events) {
     const li = add(list, 'li');
     const btn = add(li, 'button', '', 'pick');
@@ -342,9 +339,9 @@ const fill = (id, events, emptyText, dateText) => {
 };
 const byStart = (a, b) => a.start.localeCompare(b.start);
 const EVENT_LIST = typeof EVENTS === 'undefined' ? [] : EVENTS;
-fill('now', EVENT_LIST.filter(e => isOpen(e, today)).sort(byStart), '지금 열리는 행사가 없어요.',
+fill('now', EVENT_LIST.filter(e => isOpen(e, today)).sort(byStart),
   e => e.end === today ? ['오늘', '까지'] : [day(e.end), '까지']);
-fill('soon', EVENT_LIST.filter(e => e.start > today).sort(byStart), '예정된 행사가 없어요.',
+fill('soon', EVENT_LIST.filter(e => e.start > today).sort(byStart),
   e => [day(e.start), e.end === e.start ? '하루만' : '~ ' + day(e.end)]);
 
 // ---- 찾기와 길 안내 ----
