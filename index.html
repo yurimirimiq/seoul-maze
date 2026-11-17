@@ -5,68 +5,127 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>seoul-maze · 코엑스</title>
 <style>
-  body { font-family: system-ui, sans-serif; margin: 0 auto; padding: 16px; max-width: 480px; color: #222; background: #fff; }
+  body { font-family: system-ui, sans-serif; margin: 0 auto; padding: 16px; max-width: 480px; color: #222; background: #fff; line-height: 1.5; }
   h1 { margin: 0; font-size: 1.4rem; }
-  h2 { font-size: 1.1rem; margin: 20px 0 8px; }
+  h2 { font-size: 1.1rem; margin: 24px 0 8px; }
   .note { margin: 4px 0 12px; font-size: .85rem; color: #666; }
-  svg { width: 100%; border: 1px solid #ccc; border-radius: 8px; background: #fafafa; }
-  svg rect { fill: #e8eef7; stroke: #8aa0c0; stroke-width: .3; }
-  svg text { font-size: 3px; text-anchor: middle; fill: #222; }
-  #pin { fill: #e5484d; stroke: #fff; stroke-width: .6; }
+  svg { display: block; width: 100%; border: 1px solid #ccc; border-radius: 8px; background: #f6f6f3; }
+  svg polygon { fill: #dfe6f1; stroke: #8aa0c0; stroke-width: .3; }
+  svg polygon.main { fill: #cfdcf0; }
+  svg text { font-size: 2.6px; text-anchor: middle; fill: #222; paint-order: stroke; stroke: #fff; stroke-width: .7; }
+  svg .spot { fill: #1f6feb; }
+  #pin { fill: #e5484d; stroke: #fff; stroke-width: .7; }
   ul { list-style: none; margin: 0; padding: 0; }
-  li button { display: block; width: 100%; margin-bottom: 8px; padding: 12px; text-align: left; font: inherit;
-    background: #fff; border: 1px solid #ccc; border-radius: 8px; }
-  li button[aria-pressed="true"] { border-color: #e5484d; background: #fff5f5; }
-  li small { display: block; color: #666; }
+  .events li { margin-bottom: 8px; border: 1px solid #ccc; border-radius: 8px; }
+  .events li:has(button[aria-pressed="true"]) { border-color: #e5484d; background: #fff5f5; }
+  .events button { display: block; width: 100%; padding: 12px 12px 4px; text-align: left; font: inherit; color: inherit; background: none; border: 0; }
+  .events small { display: block; color: #666; }
+  .events a { display: inline-block; padding: 4px 12px 12px; font-size: .85rem; }
+  details { margin-top: 12px; border: 1px solid #ccc; border-radius: 8px; padding: 12px; }
+  summary { font-weight: 600; }
+  details li { margin-top: 8px; font-size: .92rem; }
+  footer { margin-top: 24px; font-size: .8rem; color: #666; }
 </style>
 </head>
 <body>
 <h1>코엑스</h1>
-<p class="note">직접 그린 대략적인 약도예요. 실제 위치와 다를 수 있어요.</p>
+<p class="note">위가 북쪽이에요. 땅 위 건물 모양이고, 코엑스몰은 대부분 이 건물들 아래 지하 1층이에요.</p>
 
-<svg viewBox="0 0 100 70" role="img" aria-label="코엑스몰 약도">
-  <rect x="6" y="4" width="26" height="9" rx="1.5"/><text x="19" y="9.7">봉은사역 (9호선)</text>
-  <rect x="6" y="18" width="24" height="12" rx="1.5"/><text x="18" y="25">아쿠아리움</text>
-  <rect x="50" y="8" width="24" height="12" rx="1.5"/><text x="62" y="15">메가박스</text>
-  <rect x="34" y="28" width="24" height="14" rx="1.5"/><text x="46" y="36">별마당도서관</text>
-  <rect x="6" y="46" width="26" height="12" rx="1.5"/><text x="19" y="53">현대백화점</text>
-  <rect x="66" y="54" width="28" height="9" rx="1.5"/><text x="80" y="59.7">삼성역 (2호선)</text>
-  <circle id="pin" r="2.2" display="none"/>
-</svg>
+<svg id="map" role="img" aria-label="코엑스 일대 약도"></svg>
 
-<h2>지금 열리는 팝업</h2>
-<ul id="list"></ul>
+<h2>지금 열리는 행사</h2>
+<ul id="now" class="events"></ul>
+<h2>곧 열리는 행사</h2>
+<ul id="soon" class="events"></ul>
 
-<script src="popups.js"></script>
+<details>
+  <summary>지하철에서 오는 길</summary>
+  <ul>
+    <li><b>2호선 삼성역</b>: 5·6번 출구와 이어진 통로로 들어가서 밀레니엄 광장을 지나면 코엑스몰이에요.</li>
+    <li><b>9호선 봉은사역</b>: 7번 출구와 이어진 통로로 들어가서 아셈플라자를 지나면 코엑스몰이에요.</li>
+    <li><b>7호선 청담역</b>: 2번 출구로 나와 10~15분 직진하면 아셈광장으로 들어가요.</li>
+  </ul>
+</details>
+<details>
+  <summary>전시장 편의시설</summary>
+  <ul>
+    <li><b>종합안내데스크</b>: 1층 동문. 휴대폰 충전도 돼요.</li>
+    <li><b>물품보관소</b>: 1층 A홀 신한은행 옆 에스컬레이터 앞, B홀 안내데스크 옆 에스컬레이터 앞.</li>
+    <li><b>의무실</b>: 1층 서문 옆.</li>
+    <li><b>휠체어 대여</b>: 1층 서문 옆 안전상황실, 동문 안내데스크. 오전 8시 30분 ~ 오후 6시, 무료(신분증 필요).</li>
+    <li><b>무슬림 기도실</b>: 3층 E홀 근처.</li>
+  </ul>
+</details>
+
+<footer>
+  행사와 시설 정보는 2026-11-17에 <a href="https://www.coex.co.kr/event/full-schedules/">coex.co.kr</a>에서 확인한 내용이에요. 바뀔 수 있으니 가기 전에 공식 안내를 확인하세요.
+  건물 안 길찾기는 <a href="https://www.coex.co.kr/guide/indoor-navigation/">코엑스 공식 실내 길찾기</a>를 쓰세요.
+  지도 데이터 © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors.
+</footer>
+
+<script src="map.js"></script>
+<script src="events.js"></script>
 <script>
   // 날짜가 YYYY-MM-DD 글자라서 글자 비교만으로 앞뒤를 가릴 수 있다.
-  const isOpen = (p, today) => p.start <= today && today <= p.end;
+  const isOpen = (e, today) => e.start <= today && today <= e.end;
   const t = { start: '2026-01-01', end: '2026-01-31' };
   console.assert(isOpen(t, '2026-01-01') && isOpen(t, '2026-01-31') && !isOpen(t, '2025-12-31') && !isOpen(t, '2026-02-01'), 'isOpen 자가 점검 실패');
 
-  const today = new Date().toLocaleDateString('sv'); // 'sv' 형식 = 내 시간대 기준 YYYY-MM-DD
-  const list = document.getElementById('list');
-  const pin = document.getElementById('pin');
-  const open = POPUPS.filter(p => isOpen(p, today));
-
-  if (!open.length) list.textContent = '지금 열리는 팝업이 없어요.';
-  for (const p of open) {
-    const btn = document.createElement('button');
-    btn.setAttribute('aria-pressed', 'false');
-    btn.append(p.name);
-    const info = document.createElement('small');
-    info.textContent = `${p.near} · ${p.start} ~ ${p.end}`;
-    btn.append(info);
-    btn.onclick = () => {
-      list.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === btn));
-      pin.setAttribute('cx', p.x);
-      pin.setAttribute('cy', p.y);
-      pin.removeAttribute('display');
-    };
-    const li = document.createElement('li');
-    li.append(btn);
-    list.append(li);
+  // 약도 그리기
+  const svg = document.getElementById('map');
+  const el = (tag, attrs, text) => {
+    const n = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (text) n.textContent = text;
+    return svg.appendChild(n);
+  };
+  svg.setAttribute('viewBox', `0 0 ${MAP.width} ${MAP.height}`);
+  for (const b of MAP.buildings) el('polygon', { points: b.pts, class: b.label ? 'main' : '' });
+  for (const b of MAP.buildings) if (b.label) el('text', { x: b.x, y: b.y + 1 }, b.name);
+  for (const s of MAP.spots) {
+    el('circle', { cx: s.x, cy: s.y, r: 1, class: 'spot' });
+    // 이름표가 겹치지 않게 남쪽 절반의 지점은 점 아래에, 북쪽 절반은 점 위에 쓴다.
+    el('text', { x: s.x, y: s.y > MAP.height / 2 ? s.y + 3.6 : s.y - 1.8 }, s.name);
   }
+  const pin = el('circle', { id: 'pin', r: 2.4, display: 'none' });
+  const places = Object.fromEntries([...MAP.buildings, ...MAP.spots].map(p => [p.name, p]));
+
+  // 행사 목록
+  const today = new Date().toLocaleDateString('sv'); // 'sv' 형식 = 내 시간대 기준 YYYY-MM-DD
+  const day = d => d.slice(5).replace('-', '.');
+  const fill = (id, events, emptyText) => {
+    const list = document.getElementById(id);
+    if (!events.length) list.textContent = emptyText;
+    for (const e of events) {
+      const btn = document.createElement('button');
+      btn.setAttribute('aria-pressed', 'false');
+      btn.append(e.name);
+      const info = document.createElement('small');
+      info.textContent = `${e.cat} · ${e.place} · ${day(e.start)} ~ ${day(e.end)}`;
+      btn.append(info);
+      btn.onclick = () => {
+        document.querySelectorAll('.events button').forEach(b => b.setAttribute('aria-pressed', b === btn));
+        const p = places[e.at || '코엑스 전시장'];
+        if (!p) return console.error('약도에 없는 곳:', e.at);
+        pin.setAttribute('cx', p.x);
+        pin.setAttribute('cy', p.y + 4); // 이름표를 가리지 않게 조금 아래에 찍는다
+        pin.removeAttribute('display');
+        svg.scrollIntoView({ block: 'nearest' });
+      };
+      const li = document.createElement('li');
+      li.append(btn);
+      if (e.url) {
+        const a = document.createElement('a');
+        a.href = e.url;
+        a.textContent = '공식 안내 보기';
+        li.append(a);
+      }
+      list.append(li);
+    }
+  };
+  const byStart = (a, b) => a.start.localeCompare(b.start);
+  fill('now', EVENTS.filter(e => isOpen(e, today)).sort(byStart), '지금 열리는 행사가 없어요.');
+  fill('soon', EVENTS.filter(e => e.start > today).sort(byStart), '예정된 행사가 없어요.');
 </script>
 </body>
 </html>
