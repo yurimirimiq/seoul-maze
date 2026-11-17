@@ -2,8 +2,7 @@
 
 12장이다. 깃허브에서는 아래로 내리면서 본다.
 
-화살표 키나 손가락으로 한 장씩 넘겨 보려면 [`deck.html`](deck.html)을 브라우저로 연다.
-저장소를 받아서 `python3 -m http.server 8765 --bind 127.0.0.1`을 실행하고 `http://localhost:8765/deck.html`을 열면 된다.
+화살표 키나 손가락으로 한 장씩 넘겨 보려면 **[넘겨 보는 피치덱](https://yurimirimiq.github.io/seoul-maze/deck.html)**을 연다.
 
 ## 1. 표지
 

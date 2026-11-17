@@ -5,7 +5,11 @@
   코엑스, 잠실역, 고속터미널의 실내 지도
 </p>
 
-<p align="center"><b><a href="PITCH.md">피치덱 보기 (12장)</a></b></p>
+<p align="center">
+  <b><a href="https://yurimirimiq.github.io/seoul-maze/">바로 열어 보기</a></b> &nbsp;|&nbsp;
+  <b><a href="https://yurimirimiq.github.io/seoul-maze/deck.html">피치덱 넘겨 보기 (12장)</a></b> &nbsp;|&nbsp;
+  <a href="PITCH.md">피치덱 그림으로 보기</a>
+</p>
 
 <p align="center">
   <img src="docs/home.jpg" width="30%" alt="홈 화면: 장소마다 미니 약도가 걸려 있다">
@@ -79,7 +83,6 @@
 - 몰 안 팝업 정보는 아직 없다. 행사 목록은 코엑스 전시장 것만 있고, 2026-11-17에 손으로 옮긴 것이라 시간이 지나면 낡는다.
 - 전시장 안에서 홀이 어느 쪽에 있는지는 약도에 없다. 층과 홀 이름만 글로 알려준다.
 - 가게 목록과 위치는 2026-11-17에 받은 것이다. 코엑스 목록은 `make_stores.py`로 다시 받을 수 있지만 위치, 칸 모양, 통로 선은 손으로 다시 받아야 한다.
-- 실제 폰에서는 아직 써 보지 못했다.
 
 ## 실행하는 법
 

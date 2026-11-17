@@ -51,4 +51,5 @@
 - 사용자와는 한국어로, 쉬운 말로 대화한다. git 용어는 풀어서 설명한다.
 - 이 맥에는 `gh` CLI가 없다. GitHub 작업은 `git` 명령으로 하거나 사용자에게 웹에서 해 달라고 한다.
 - 원격 저장소: GitHub `yurimirimiq/seoul-maze` (`origin`, 기본 브랜치 `main`).
+- 공개 주소: https://yurimirimiq.github.io/seoul-maze/ (GitHub Pages). 사용자가 2026-11-17에 폰에서 열 수 있게 해 달라고 해서 켰다. `gh-pages` 가지의 내용이 그대로 나가므로, 올릴 때는 `git push origin main main:gh-pages`로 두 가지를 같이 올린다(main만 올리면 공개 주소는 안 바뀐다). 올린 뒤 반영까지 1~2분 걸린다. 저장소 설정에서 Pages 출처를 main으로 바꾸면 gh-pages 가지는 없애도 된다(사용자가 웹에서 해야 한다).
 - 가장 작은 버전부터 만든다. 요청하지 않은 기능은 넣지 않는다.
