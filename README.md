@@ -5,7 +5,7 @@
   코엑스, 잠실역, 고속터미널의 실내 지도
 </p>
 
-<p align="center"><b><a href="https://claude.ai/artifact/QYWtdXBo1rJ9773Btuy9Jy">피치덱 보기 (12장)</a></b></p>
+<p align="center"><b><a href="PITCH.md">피치덱 보기 (12장)</a></b></p>
 
 <p align="center">
   <img src="docs/home.jpg" width="30%" alt="홈 화면: 장소마다 미니 약도가 걸려 있다">
@@ -99,7 +99,8 @@ coex.html jamsil.html gosok.html   장소 화면
 app.js style.css          세 장소가 같이 쓰는 코드와 스타일
 coex/ jamsil/ gosok/      장소별 자료 (약도 map.js, 층 floors.js, 가게 stores.js, 미니 약도 thumb.svg ...)
 make_*.py                 자료를 만드는 스크립트
-docs/                     이 문서에 쓰는 화면 사진
+deck.html                 넘겨 보는 피치덱 (PITCH.md는 깃허브에서 내려 보는 그림판)
+docs/                     이 문서와 피치덱에 쓰는 그림
 ```
 
 ## 자료 고치는 법
