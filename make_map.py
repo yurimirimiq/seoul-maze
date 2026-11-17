@@ -39,13 +39,11 @@ PLACES = {
         # 범위 안에서 OSM level 태그가 이 값인 가게와 시설을 자동으로 모아 그 층에 넣는다.
         # shortcut: 0과 1은 지도 그린 사람마다 1층인지 2층인지 달라서 지하(-1)만 쓴다, 다른 층은 확인된 자료가 생기면 넣는다.
         "levels": {"-1": "B1"},
-        "rename": {"코엑스 아쿠아리움 (COEX Aquarium)": "아쿠아리움", "MEGABOX": "메가박스"},
+        # OSM 이름 -> stores.js(공식 목록)의 이름. 이름이 같아야 목록에서 눌러 약도에 찍을 수 있다.
+        "rename": {"코엑스 아쿠아리움 (COEX Aquarium)": "아쿠아리움", "MEGABOX": "메가박스", "P.F. Chang's": "피에프창",
+                   "폴 바셋": "폴바셋", "Carhartt": "칼하트 WIP", "Onitsuka Tiger": "오니츠카타이거", "Zara": "자라"},
     },
 }
-
-# OSM 종류 태그 -> 층별 목록의 묶음 이름
-KINDS = {"aquarium": "볼거리", "cinema": "볼거리", "books": "서점", "cafe": "카페",
-         "restaurant": "먹을 곳", "fast_food": "먹을 곳", "clothes": "패션", "shoes": "패션"}
 
 WIDTH = 100  # 약도 가로 길이. 세로는 실제 비율대로 계산한다.
 M_PER_LAT = 111_000
@@ -90,8 +88,8 @@ def main(place):
             continue
         x, y = xy(*[(e.get("center") or e)[k] for k in ("lat", "lon")])
         spots.append({"name": cfg["rename"].get(tags["name"], tags["name"]), "x": x, "y": y,
-                      "floor": cfg["levels"][tags["level"]], "kind": KINDS.get(kind, "그 밖")})
-    spots.sort(key=lambda s: (s.get("floor", ""), s.get("kind", ""), s["name"]))  # 결과가 매번 같게
+                      "floor": cfg["levels"][tags["level"]]})
+    spots.sort(key=lambda s: (s.get("floor", ""), s["name"]))  # 결과가 매번 같게
     for i in buildings + spots:
         assert 0 <= i["x"] <= WIDTH and 0 <= i["y"] <= height, f"범위 밖: {i['name']}"
 

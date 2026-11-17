@@ -14,10 +14,14 @@
 <h1>코엑스</h1>
 
 <div class="mapwrap">
-  <svg id="map" role="img" aria-label="코엑스 일대 약도"></svg>
+  <div id="mapscroll" class="mapscroll"><svg id="map" role="img" aria-label="코엑스 일대 약도"></svg></div>
   <div id="floors" class="floors" role="group" aria-label="층 선택"></div>
+  <div class="zoom" role="group" aria-label="약도 크기">
+    <button aria-label="약도 키우기">+</button>
+    <button aria-label="약도 줄이기">−</button>
+  </div>
 </div>
-<p class="caption">땅 위 건물 모양 위에 고른 층의 장소를 점으로 찍어요. 지하 1층 가게는 오픈스트리트맵에 층이 적힌 곳만 나와요.</p>
+<p class="caption">땅 위 건물 모양 위에 고른 층의 가게를 점으로 찍어요. 위치가 확인된 가게만 점이 있고, 목록에서 밑줄 친 이름을 누르면 찾아가요.</p>
 
 <section id="floor" aria-live="polite"></section>
 
@@ -27,13 +31,14 @@
 <ul id="soon" class="events"></ul>
 
 <footer>
-  행사와 시설 정보는 2026-11-17에 <a href="https://www.coex.co.kr/event/full-schedules/">coex.co.kr</a>에서 확인한 내용이에요. 바뀔 수 있으니 가기 전에 공식 안내를 확인하세요.
+  행사와 시설 정보는 2026-11-17에 <a href="https://www.coex.co.kr/event/full-schedules/">coex.co.kr</a>에서, 가게 목록은 <a href="https://www.starfield.co.kr/coexmall/tenant/floorInfo.do">스타필드 코엑스몰 층별 안내</a>에서 확인한 내용이에요. 바뀔 수 있으니 가기 전에 공식 안내를 확인하세요.
   건물 안 길찾기는 <a href="https://www.coex.co.kr/guide/indoor-navigation/">코엑스 공식 실내 길찾기</a>를 쓰세요.
   지도 데이터 © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors.
 </footer>
 
 <script src="coex/map.js"></script>
 <script src="coex/floors.js"></script>
+<script src="coex/stores.js"></script>
 <script src="coex/events.js"></script>
 <script src="app.js"></script>
 </body>

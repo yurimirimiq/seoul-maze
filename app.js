@@ -22,19 +22,23 @@ const LINES = { '삼성역': '2', '봉은사역': '9' };
 for (const s of MAP.spots) {
   const exit = s.name.match(/^(.+역) (.+)번 출구$/);
   if (s.floor) {
-    // 층에 딸린 가게는 그 층을 골랐을 때만 점으로 보인다. 이름은 겹치지 않게 고른 것만 띄운다.
+    // 층에 딸린 가게는 그 층을 골랐을 때만 점으로 보인다. 공식 매장 목록에 없는 곳은 없어진 가게로 보고 뺀다.
+    if (STORES[s.floor] && !Object.values(STORES[s.floor]).flat().includes(s.name)) continue;
     el('circle', { cx: s.x, cy: s.y, r: 1.1, class: 'spot', 'data-floor': s.floor });
+    // 이름은 서로 겹쳐서 약도를 키웠을 때만 보인다
+    el('text', { x: s.x, y: s.y, dx: '1.1em', class: 'spotname', 'data-floor': s.floor }, s.name);
   } else if (exit && LINES[exit[1]]) {
     // 지하철 출구는 실제 표지판처럼 그린다: 노선 색 동그라미 + 노란 출구 번호
     const line = LINES[exit[1]];
     const below = s.y > MAP.height / 2; // 이름표가 건물과 겹치지 않게 남쪽 절반은 아래에, 북쪽 절반은 위에 쓴다
     const w = 2 + exit[2].length * 1.7;
     const left = s.x - (4.6 + w) / 2;
-    el('circle', { cx: left + 2, cy: s.y, r: 2, class: 'line l' + line });
-    el('text', { x: left + 2, y: s.y + 1, class: 'sign l' + line }, line);
-    el('rect', { x: left + 4.6, y: s.y - 2, width: w, height: 4, rx: .6, class: 'exit' });
-    el('text', { x: left + 4.6 + w / 2, y: s.y + 1, class: 'sign' }, exit[2]);
-    el('text', { x: s.x, y: below ? s.y + 5.6 : s.y - 3.2 }, exit[1]);
+    const g = el('g', { class: 'keep' }); // 표지판은 약도를 키워도 같은 크기로 남는다
+    el('circle', { cx: left + 2, cy: s.y, r: 2, class: 'line l' + line }, '', g);
+    el('text', { x: left + 2, y: s.y + 1, class: 'sign l' + line }, line, g);
+    el('rect', { x: left + 4.6, y: s.y - 2, width: w, height: 4, rx: .6, class: 'exit' }, '', g);
+    el('text', { x: left + 4.6 + w / 2, y: s.y + 1, class: 'sign' }, exit[2], g);
+    el('text', { x: s.x, y: below ? s.y + 5.6 : s.y - 3.2, class: 'fixed' }, exit[1], g);
   } else {
     el('circle', { cx: s.x, cy: s.y, r: 1.1, class: 'spot' });
     el('text', { x: s.x, y: s.y - 1.8 }, s.name);
@@ -42,11 +46,12 @@ for (const s of MAP.spots) {
 }
 // 건물 이름은 가게 점보다 나중에 그려서 점에 가려지지 않게 한다
 for (const b of MAP.buildings) if (b.label) el('text', { x: b.x, y: b.y + 1 }, b.name);
-el('path', { d: 'M4 9l2-5 2 5z', class: 'north' });
-el('text', { x: 6, y: 12.4, class: 'north' }, '북');
+const north = el('g', { class: 'keep north' });
+el('path', { d: 'M4 9l2-5 2 5z' }, '', north);
+el('text', { x: 6, y: 12.4 }, '북', north);
 const ping = el('circle', { id: 'ping', r: 2.4, display: 'none' });
-const pin = el('circle', { id: 'pin', r: 2.4, display: 'none' });
-const pinName = el('text', { id: 'pinname', display: 'none' });
+const pin = el('circle', { id: 'pin', r: 2.4, class: 'keep', display: 'none' });
+const pinName = el('text', { id: 'pinname', dy: '-1.3em', display: 'none' });
 const places = Object.fromEntries([...MAP.buildings, ...MAP.spots].map(p => [p.name, p]));
 
 const add = (parent, tag, text, cls) => {
@@ -70,13 +75,35 @@ const pick = (btn, name) => {
   // 이름표가 없는 가게는 점 위에 이름을 띄운다
   pinName.textContent = p.floor ? p.name : '';
   pinName.setAttribute('x', Math.min(Math.max(p.x, p.name.length * 1.6), MAP.width - p.name.length * 1.6));
-  pinName.setAttribute('y', y - 3.6);
+  pinName.setAttribute('y', y);
   pinName.removeAttribute('display');
   ping.classList.remove('go');
   ping.getBBox(); // 애니메이션을 처음부터 다시 돌리려면 한 번 읽어 줘야 한다
   ping.classList.add('go');
-  svg.scrollIntoView({ block: 'nearest' });
+  scroller.scrollIntoView({ block: 'nearest' });
+  // 키워 놓은 약도에서는 찍힌 곳이 가운데 오게 옮긴다
+  scroller.scrollTo(p.x / MAP.width * svg.clientWidth - scroller.clientWidth / 2, y / MAP.height * svg.clientHeight - scroller.clientHeight / 2);
 };
+
+// 약도 키우기와 줄이기. 손가락으로 끌면 옮겨진다.
+const scroller = document.getElementById('mapscroll');
+const [zoomIn, zoomOut] = document.querySelectorAll('.zoom button');
+scroller.style.aspectRatio = `${MAP.width} / ${MAP.height}`;
+let zoom = 1;
+const setZoom = z => {
+  // 보고 있던 가운데가 그대로 가운데에 남게 한다
+  const cx = (scroller.scrollLeft + scroller.clientWidth / 2) / zoom, cy = (scroller.scrollTop + scroller.clientHeight / 2) / zoom;
+  zoom = Math.min(3, Math.max(1, z));
+  svg.style.width = zoom * 100 + '%';
+  svg.style.setProperty('--z', zoom); // 글자는 약도가 커져도 같은 크기로 남는다
+  svg.classList.toggle('near', zoom > 1);
+  scroller.scrollTo(cx * zoom - scroller.clientWidth / 2, cy * zoom - scroller.clientHeight / 2);
+  zoomIn.disabled = zoom === 3;
+  zoomOut.disabled = zoom === 1;
+};
+zoomIn.onclick = () => setZoom(zoom + 1);
+zoomOut.onclick = () => setZoom(zoom - 1);
+setZoom(1);
 
 // 층 고르기
 const floorBtns = document.getElementById('floors');
@@ -97,14 +124,23 @@ const setFloor = id => {
     const box = row(g.title);
     for (const [name, where] of g.items) add(add(box, 'p', name), 'small', where);
   }
-  // 이 층에 위치가 있는 가게는 누르면 약도에 찍힌다
-  const spots = MAP.spots.filter(s => s.floor === id);
-  for (const kind of new Set(spots.map(s => s.kind))) {
-    const box = row(kind);
-    for (const s of spots.filter(s => s.kind === kind)) {
-      const btn = add(box, 'button', s.name, 'pick');
+  // 가게: 종류별로 접어 두고 하나씩 펼친다. 약도에 위치가 있는 가게는 누르면 찍힌다.
+  const cats = Object.entries(STORES[id] || {});
+  if (!cats.length) return;
+  add(panel, 'h3', `가게 ${cats.reduce((n, [, names]) => n + names.length, 0)}곳`);
+  for (const [i, [cat, names]] of cats.entries()) {
+    const box = add(panel, 'details');
+    box.setAttribute('name', 'cat'); // 같은 name끼리는 하나만 펼쳐진다
+    box.open = i === 0;
+    add(add(box, 'summary', cat), 'small', names.length);
+    const list = add(box, 'ul', '', 'cols');
+    for (const name of names) {
+      const li = add(list, 'li');
+      const p = places[name];
+      if (!p || (p.floor && p.floor !== id)) { li.textContent = name; continue; }
+      const btn = add(li, 'button', name, 'pick');
       btn.setAttribute('aria-pressed', 'false');
-      btn.onclick = () => pick(btn, s.name);
+      btn.onclick = () => pick(btn, name);
     }
   }
 };
@@ -114,7 +150,7 @@ for (const f of FLOORS) {
   b.setAttribute('aria-label', f.name);
   b.onclick = () => setFloor(f.id);
 }
-setFloor(FLOORS.at(-1).id); // 맨 아래층(몰)부터 보여 준다
+setFloor((FLOORS.find(f => f.start) || FLOORS[0]).id);
 
 // 행사 목록
 const today = new Date().toLocaleDateString('sv'); // 'sv' 형식 = 내 시간대 기준 YYYY-MM-DD

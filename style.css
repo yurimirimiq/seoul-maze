@@ -50,28 +50,39 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 60
 
 /* 약도: 밝은 바탕에 옅은 건물, 글자와 점만 남색 */
 .mapwrap { position: relative; }
-#map { display: block; width: 100%; border: 1px solid var(--rule); border-radius: 8px; background: var(--map); }
+.mapscroll { overflow: auto; overscroll-behavior: contain; border: 1px solid var(--rule); border-radius: 8px; background: var(--map); }
+#map { display: block; width: 100%; }
 #map polygon { fill: var(--bldg); }
 #map polygon.main { fill: var(--bldg-main); }
-#map text { font-size: 3px; font-weight: 600; text-anchor: middle; fill: var(--ink); paint-order: stroke; stroke: var(--map); stroke-width: .9; }
+#map text { font-size: calc(3px / var(--z, 1)); font-weight: 600; text-anchor: middle; fill: var(--ink); paint-order: stroke; stroke: var(--map); stroke-width: calc(.9px / var(--z, 1)); }
+#map text.fixed { font-size: 3px; stroke-width: .9px; }
+#map text.spotname { display: none; text-anchor: start; dominant-baseline: central; font-weight: 500; }
+#map.near text.spotname { display: inline; }
+#map.near #pinname { display: none; } /* 키운 약도에서는 가게 이름이 이미 보인다 */
+/* 점과 표지판은 약도를 키워도 화면에서 같은 크기로 남는다 */
+#map .spot, #map .keep { transform-box: fill-box; transform-origin: center; transform: scale(calc(1 / var(--z, 1))); }
 #map .spot { fill: var(--ink); stroke: var(--map); stroke-width: .4; }
 #map .exit { fill: var(--exit); }
 #map circle.line { fill: var(--line); }
 #map text.sign { fill: var(--line-ink, var(--ink)); stroke: none; font-size: 2.8px; }
-#map .north { fill: var(--muted); stroke: none; font-size: 2.6px; }
+#map .north, #map .north text { fill: var(--muted); stroke: none; font-size: 2.6px; }
 #pin { fill: var(--here); stroke: #fff; stroke-width: .8; }
-#ping { fill: none; stroke: var(--here); stroke-width: .6; transform-box: fill-box; transform-origin: center; }
+#ping { fill: none; stroke: var(--here); stroke-width: .6; transform-box: fill-box; transform-origin: center; transform: scale(calc(1 / var(--z, 1))); }
 #ping.go { animation: ping .9s ease-out; }
-@keyframes ping { from { transform: scale(1); opacity: 1; } to { transform: scale(4); opacity: 0; } }
+@keyframes ping { from { opacity: 1; } to { transform: scale(calc(4 / var(--z, 1))); opacity: 0; } }
 .caption { margin: 8px 0 0; font-size: .8125rem; color: var(--muted); }
 
 /* 층 버튼: 엘리베이터처럼 위층이 위에 */
-.floors { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; overflow: hidden;
+.floors, .zoom { position: absolute; right: 8px; display: flex; flex-direction: column; overflow: hidden;
   border: 1px solid var(--rule); border-radius: 8px; background: #fff; }
-.floors button { width: 2.5rem; height: 2.5rem; border: 0; border-top: 1px solid var(--rule); font: inherit; font-size: .875rem; font-weight: 600; color: var(--ink); background: none; }
-.floors button:first-child { border-top: 0; }
-.floors button[aria-pressed="true"] { color: #fff; background: var(--ink); }
-.floors button:focus-visible { outline-offset: -3px; }
+.floors { top: 8px; }
+.zoom { bottom: 8px; }
+.mapwrap button { width: 2.5rem; height: 2.5rem; border: 0; border-top: 1px solid var(--rule); font: inherit; font-size: .875rem; font-weight: 600; color: var(--ink); background: none; }
+.mapwrap button:first-child { border-top: 0; }
+.mapwrap button[aria-pressed="true"] { color: #fff; background: var(--ink); }
+.mapwrap button:disabled { color: var(--rule); }
+.mapwrap button:focus-visible { outline-offset: -3px; }
+.zoom button { font-size: 1.25rem; font-weight: 400; }
 
 /* 층별 목록 */
 #floor h2 small { margin-left: 8px; font-size: .8125rem; font-weight: 400; color: var(--muted); }
@@ -80,9 +91,19 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 60
 .rows p { margin: 0; font-weight: 500; }
 .rows p + p { margin-top: 6px; }
 .rows p small { display: block; font-size: .8125rem; font-weight: 400; color: var(--muted); }
-.rows div:has(button) { display: flex; flex-wrap: wrap; gap: 6px; }
-.rows button { padding: 6px 12px; border: 1px solid var(--rule); border-radius: 999px; font: inherit; font-size: .875rem; font-weight: 500; color: var(--ink); background: #fff; }
-.rows button[aria-pressed="true"] { border-color: var(--here); color: #fff; background: var(--here); }
+
+/* 가게 목록: 종류별로 접어 두고 하나만 펼친다 */
+#floor h3 { margin: 24px 0 0; padding-bottom: 8px; font-size: .9375rem; font-weight: 600; border-bottom: 1px solid var(--ink); }
+#floor details { border-bottom: 1px solid var(--rule); }
+#floor summary { display: flex; align-items: center; gap: 8px; padding: 12px 8px; font-weight: 500; list-style: none; cursor: pointer; }
+#floor summary::-webkit-details-marker { display: none; }
+#floor summary small { font-size: .8125rem; font-weight: 400; color: var(--muted); }
+#floor summary::after { content: '+'; margin-left: auto; font-size: 1.125rem; line-height: 1; color: var(--muted); }
+#floor details[open] summary::after { content: '−'; }
+.cols { columns: 2; column-gap: 16px; padding: 0 8px 14px; font-size: .875rem; }
+.cols li { break-inside: avoid; padding: 3px 0; }
+.cols button { padding: 0; border: 0; font: inherit; font-weight: 600; text-align: left; text-decoration: underline; text-underline-offset: 3px; color: var(--ink); background: none; }
+.cols button[aria-pressed="true"] { color: var(--here); }
 
 /* 행사 시간표 */
 .events li { border-bottom: 1px solid var(--rule); border-left: 4px solid transparent; padding-bottom: 10px; }

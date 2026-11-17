@@ -116,74 +116,64 @@ const MAP = {
    "y": 87.7
   },
   {
-   "name": "P.F. Chang's",
-   "x": 39.3,
-   "y": 16.4,
-   "floor": "B1",
-   "kind": "먹을 곳"
-  },
-  {
    "name": "Super Duper Burger",
    "x": 30.9,
    "y": 42.5,
-   "floor": "B1",
-   "kind": "먹을 곳"
-  },
-  {
-   "name": "크리스피크림도넛",
-   "x": 33.1,
-   "y": 52.7,
-   "floor": "B1",
-   "kind": "먹을 곳"
+   "floor": "B1"
   },
   {
    "name": "메가박스",
    "x": 25.1,
    "y": 26.5,
-   "floor": "B1",
-   "kind": "볼거리"
+   "floor": "B1"
   },
   {
    "name": "아쿠아리움",
    "x": 26.4,
    "y": 20.7,
-   "floor": "B1",
-   "kind": "볼거리"
+   "floor": "B1"
   },
   {
    "name": "영풍문고",
    "x": 25.8,
    "y": 35.4,
-   "floor": "B1",
-   "kind": "서점"
+   "floor": "B1"
   },
   {
-   "name": "폴 바셋",
-   "x": 35.8,
-   "y": 14.5,
-   "floor": "B1",
-   "kind": "카페"
-  },
-  {
-   "name": "Carhartt",
-   "x": 32.6,
-   "y": 41.3,
-   "floor": "B1",
-   "kind": "패션"
-  },
-  {
-   "name": "Onitsuka Tiger",
+   "name": "오니츠카타이거",
    "x": 31.0,
    "y": 39.9,
-   "floor": "B1",
-   "kind": "패션"
+   "floor": "B1"
   },
   {
-   "name": "Zara",
+   "name": "자라",
    "x": 48.2,
    "y": 57.1,
-   "floor": "B1",
-   "kind": "패션"
+   "floor": "B1"
+  },
+  {
+   "name": "칼하트 WIP",
+   "x": 32.6,
+   "y": 41.3,
+   "floor": "B1"
+  },
+  {
+   "name": "크리스피크림도넛",
+   "x": 33.1,
+   "y": 52.7,
+   "floor": "B1"
+  },
+  {
+   "name": "폴바셋",
+   "x": 35.8,
+   "y": 14.5,
+   "floor": "B1"
+  },
+  {
+   "name": "피에프창",
+   "x": 39.3,
+   "y": 16.4,
+   "floor": "B1"
   }
  ]
 };
