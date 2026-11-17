@@ -8,7 +8,6 @@
   --here: #e5342b;
   --bldg: #2c3c74;
   --bldg-main: #4560b0;
-  --display: 'Black Han Sans', 'IBM Plex Sans KR', system-ui, sans-serif;
   --date-col: 4.25rem;
 }
 /* 지하철 노선 색. 글자색은 노선 색 위에서 읽히는 쪽으로 고른다. */
@@ -24,8 +23,8 @@ body { font-family: 'IBM Plex Sans KR', system-ui, sans-serif; margin: 0 auto; p
 a { color: inherit; }
 ul { list-style: none; margin: 0; padding: 0; }
 
-h1 { margin: 0 0 12px; font: 400 3.25rem/1 var(--display); letter-spacing: -.01em; }
-h2 { margin: 36px 0 0; padding-bottom: 8px; font: 400 1.375rem/1.2 var(--display); border-bottom: 3px solid var(--ink); }
+h1 { margin: 0 0 14px; font-size: 2.5rem; font-weight: 600; line-height: 1.1; letter-spacing: -.03em; }
+h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 600; line-height: 1.3; letter-spacing: -.01em; border-bottom: 2px solid var(--ink); }
 
 /* 워드마크: 소문자 pathfinder, i의 점만 빨간 도착점 */
 .wordmark { font-family: 'IBM Plex Sans KR', system-ui, sans-serif; font-weight: 600; letter-spacing: -.03em; line-height: 1; color: var(--ink); text-decoration: none; }
@@ -40,7 +39,7 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font: 400 1.375rem/1.2 var(--display
 .lead { margin: 20px 0 0; font-size: 1.0625rem; }
 .places li { border-bottom: 1px solid var(--rule); }
 .places .row { display: flex; align-items: center; gap: 12px; padding: 16px 8px; text-decoration: none; }
-.places .name { margin-right: auto; font: 400 1.75rem/1.1 var(--display); }
+.places .name { margin-right: auto; font-size: 1.5rem; font-weight: 600; line-height: 1.2; letter-spacing: -.02em; }
 .places .soon { color: var(--muted); }
 .places .soon .lines { opacity: .45; }
 .places small { font-size: .8125rem; color: var(--muted); }
@@ -69,16 +68,16 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font: 400 1.375rem/1.2 var(--display
 .events li:has(button[aria-pressed="true"]) { border-left-color: var(--here); background: #fff; }
 .events button { display: grid; grid-template-columns: var(--date-col) 1fr auto; column-gap: 10px; align-items: start;
   width: 100%; padding: 12px 8px 2px; text-align: left; font: inherit; color: inherit; background: none; border: 0; }
-.date b { display: block; font: 400 1.25rem/1.2 var(--display); }
+.date b { display: block; font-size: 1.125rem; font-weight: 600; line-height: 1.3; font-variant-numeric: tabular-nums; }
 .date small, .what small { display: block; font-size: .8125rem; color: var(--muted); }
 .what b { display: block; font-weight: 600; line-height: 1.35; }
 .what small span { margin-right: 8px; color: var(--ink); font-weight: 500; }
-.floor { min-width: 2.25rem; padding: 6px 4px; border-radius: 4px; text-align: center; font: 400 1rem/1.25 var(--display); color: #fff; background: var(--ink); }
+.floor { min-width: 2.25rem; padding: 6px 4px; border-radius: 4px; text-align: center; font-size: .875rem; font-weight: 600; line-height: 1.25; color: #fff; background: var(--ink); }
 .events a { display: inline-block; margin-left: calc(var(--date-col) + 18px); padding: 4px 0; font-size: .8125rem; color: var(--muted); }
 .events li:not(:has(button)) { padding: 12px 8px; color: var(--muted); }
 
-details { margin-top: 36px; border-top: 3px solid var(--ink); padding-top: 10px; }
-summary { font: 400 1.125rem/1.3 var(--display); }
+details { margin-top: 36px; border-top: 2px solid var(--ink); padding-top: 10px; }
+summary { font-size: 1.0625rem; font-weight: 600; }
 details li { margin-top: 8px; font-size: .9375rem; }
 footer { margin-top: 32px; font-size: .75rem; color: var(--muted); }
 

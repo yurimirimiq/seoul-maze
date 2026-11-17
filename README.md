@@ -32,7 +32,7 @@
 - **행사, 팝업 고치기**: `coex/events.js`만 고친다. 기간이 지난 것은 화면에서 자동으로 빠진다.
 - **약도 고치기**: `make_map.py`에서 건물이나 지점을 넣고 빼고 `python3 make_map.py coex`를 실행한다. `coex/map.js`가 새로 만들어진다.
 
-서버 없이 HTML 파일과 데이터 파일만으로 돌아간다. 글꼴(Black Han Sans, IBM Plex Sans KR)만 Google Fonts에서 받아 온다.
+서버 없이 HTML 파일과 데이터 파일만으로 돌아간다. 글꼴(IBM Plex Sans KR)만 Google Fonts에서 받아 온다.
 
 ## 장소 추가하는 법
 
