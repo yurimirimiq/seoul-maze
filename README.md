@@ -5,6 +5,8 @@
   코엑스, 잠실역, 고속터미널의 실내 지도
 </p>
 
+<p align="center"><b><a href="https://claude.ai/artifact/QYWtdXBo1rJ9773Btuy9Jy">피치덱 보기 (10장)</a></b></p>
+
 <p align="center">
   <img src="docs/home.jpg" width="30%" alt="홈 화면: 장소마다 미니 약도가 걸려 있다">
   <img src="docs/coex.jpg" width="30%" alt="코엑스 지하 1층 약도">
