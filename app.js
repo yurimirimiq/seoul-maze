@@ -88,19 +88,34 @@ const relabel = () => {
     if (show) kept.push(box);
   }
 };
-const setZoom = z => {
-  // 보고 있던 가운데가 그대로 가운데에 남게 한다
-  const cx = (scroller.scrollLeft + scroller.clientWidth / 2) / zoom, cy = (scroller.scrollTop + scroller.clientHeight / 2) / zoom;
+// at: 그 자리가 움직이지 않게 키울 화면 위치(스크롤 상자 기준). 안 주면 가운데.
+const setZoom = (z, at = { x: scroller.clientWidth / 2, y: scroller.clientHeight / 2 }) => {
+  const mx = (scroller.scrollLeft + at.x) / zoom, my = (scroller.scrollTop + at.y) / zoom;
   zoom = Math.min(MAX_ZOOM, Math.max(1, z));
   svg.style.width = zoom * 100 + '%';
   svg.style.setProperty('--z', zoom); // 글자와 점은 약도가 커져도 같은 크기로 남는다
-  scroller.scrollTo(cx * zoom - scroller.clientWidth / 2, cy * zoom - scroller.clientHeight / 2);
+  scroller.scrollTo(mx * zoom - at.x, my * zoom - at.y);
   zoomIn.disabled = zoom === MAX_ZOOM;
   zoomOut.disabled = zoom === 1;
   relabel();
 };
 zoomIn.onclick = () => setZoom(zoom * 2);
 zoomOut.onclick = () => setZoom(zoom / 2);
+// 마우스 휠이나 트랙패드로도 키우고 줄인다. 커서가 있는 자리를 중심으로 움직인다.
+scroller.addEventListener('wheel', e => {
+  const next = Math.min(MAX_ZOOM, Math.max(1, zoom * Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .002)))); // ctrlKey = 트랙패드 두 손가락 벌리기
+  if (next === zoom) return; // 더 줄일 수 없으면 페이지가 평소처럼 스크롤되게 둔다
+  e.preventDefault();
+  const box = scroller.getBoundingClientRect();
+  setZoom(next, { x: e.clientX - box.left, y: e.clientY - box.top });
+}, { passive: false });
+// 마우스로는 끌어서 옮긴다. 손가락은 브라우저가 알아서 옮겨 준다.
+scroller.addEventListener('pointerdown', e => {
+  if (e.pointerType !== 'mouse') return;
+  const move = m => scroller.scrollBy(-m.movementX, -m.movementY);
+  scroller.addEventListener('pointermove', move);
+  addEventListener('pointerup', () => scroller.removeEventListener('pointermove', move), { once: true });
+});
 
 // 고른 곳을 약도에 빨갛게 표시한다. 한 곳이면 빨간 점을 찍고 그쪽으로 옮긴다. 행사와 가게 목록이 같이 쓴다.
 const pick = (btn, key) => {
