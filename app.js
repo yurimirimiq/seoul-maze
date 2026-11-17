@@ -108,7 +108,8 @@ const add = (parent, tag, text, cls) => {
 // 약도 키우기와 줄이기. 손가락으로 끌면 옮겨진다.
 const scroller = document.getElementById('mapscroll');
 const [zoomIn, zoomOut] = document.querySelectorAll('.zoom button');
-scroller.style.aspectRatio = Math.min(MAP.width / MAP.height, 1); // 가로로 긴 약도(잠실)도 볼 자리는 정사각형만큼 준다
+// 약도가 볼 자리를 빈틈없이 덮는 가장 작은 크기. 이보다 줄이면 약도 밖 빈 띠가 보여서 여기까지만 줄인다.
+const fit = () => Math.max(1, scroller.clientHeight / scroller.clientWidth * MAP.width / MAP.height);
 const MAX_ZOOM = 32; // 지하상가 칸은 4m 남짓이라 이만큼 키워야 번호가 다 보인다
 let zoom = 1, floor, picked = [];
 
@@ -141,18 +142,18 @@ const relabel = () => {
 // at: 그 자리가 움직이지 않게 키울 화면 위치(스크롤 상자 기준). 안 주면 가운데.
 const setZoom = (z, at = { x: scroller.clientWidth / 2, y: scroller.clientHeight / 2 }) => {
   const mx = (scroller.scrollLeft + at.x) / zoom, my = (scroller.scrollTop + at.y) / zoom;
-  zoom = Math.min(MAX_ZOOM, Math.max(1, z));
+  zoom = Math.min(MAX_ZOOM, Math.max(fit(), z));
   svg.style.width = zoom * 100 + '%';
   scroller.scrollTo(mx * zoom - at.x, my * zoom - at.y);
   zoomIn.disabled = zoom === MAX_ZOOM;
-  zoomOut.disabled = zoom === 1;
+  zoomOut.disabled = zoom === fit();
   relabel();
 };
 zoomIn.onclick = () => setZoom(zoom * 2);
 zoomOut.onclick = () => setZoom(zoom / 2);
 // 마우스 휠이나 트랙패드로도 키우고 줄인다. 커서가 있는 자리를 중심으로 움직인다.
 scroller.addEventListener('wheel', e => {
-  const next = Math.min(MAX_ZOOM, Math.max(1, zoom * Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .002)))); // ctrlKey = 트랙패드 두 손가락 벌리기
+  const next = Math.min(MAX_ZOOM, Math.max(fit(), zoom * Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .002)))); // ctrlKey = 트랙패드 두 손가락 벌리기
   if (next === zoom) return; // 더 줄일 수 없으면 페이지가 평소처럼 스크롤되게 둔다
   e.preventDefault();
   const box = scroller.getBoundingClientRect();
@@ -265,8 +266,9 @@ for (const f of FLOORS) {
   b.onclick = () => setFloor(f.id);
 }
 setFloor((FLOORS.find(f => f.start) || FLOORS[0]).id);
-setZoom(1);
-addEventListener('resize', relabel);
+setZoom(0); // 볼 자리를 덮는 크기로 시작해서 약도 가운데를 보여 준다
+scroller.scrollTo((svg.clientWidth - scroller.clientWidth) / 2, (svg.clientHeight - scroller.clientHeight) / 2);
+addEventListener('resize', () => setZoom(zoom)); // 화면 크기가 바뀌면 덮는 크기도 바뀐다
 
 // 행사 목록. 행사 자료(EVENTS)가 없는 장소는 건너뛴다.
 const today = new Date().toLocaleDateString('sv'); // 'sv' 형식 = 내 시간대 기준 YYYY-MM-DD
@@ -325,6 +327,9 @@ const finder = document.getElementById('finder');
 if (finder) {
   const [toInput, fromInput] = finder.querySelectorAll('input');
   const gps = finder.querySelector('button'), hits = document.getElementById('hits'), guide = document.getElementById('guide');
+  const box = finder.parentNode; // 돋보기를 누르면 열리는 상자. 열면 바로 적을 수 있게 하고, 고르고 나면 약도가 보이게 닫는다.
+  box.ontoggle = () => box.open && toInput.focus();
+  box.onkeydown = e => { if (e.key === 'Escape') box.open = false; };
   const squash = s => s.toLowerCase().replace(/\s/g, '');
 
   // 찾을 수 있는 것 전부: 층별 가게 목록의 이름 + 약도에 자리가 있는 것(시설, 칸 번호, 안내 표시) + 층 안내에 적은 시설(전시홀 등)
@@ -443,7 +448,7 @@ if (finder) {
       add(btn, 'b', t.name);
       add(btn, 'small', t.floor.name);
       add(btn, 'small', places[t.key] ? t.cat : t.cat + ', 자리 정보 없음');
-      btn.onclick = () => { input.value = t.name; hits.replaceChildren(); onPick(t); };
+      btn.onclick = () => { input.value = t.name; hits.replaceChildren(); box.open = false; onPick(t); };
     }
     if (!hits.children.length) add(hits, 'li', '찾는 곳이 없어요. 다른 이름으로 찾아보세요.');
   };
@@ -460,6 +465,7 @@ if (finder) {
       const p = { name: '내 위치', gps: Math.round(c.accuracy), x: (c.longitude - west) / (east - west) * MAP.width, y: (north - c.latitude) / (north - south) * MAP.height };
       if (p.x < 0 || p.x > MAP.width || p.y < 0 || p.y > MAP.height) { guide.textContent = '지금 위치가 이 약도 밖이에요. 출발지를 직접 찾아 골라 주세요.'; return; }
       start = p;
+      box.open = false;
       fromInput.value = p.name;
       hits.replaceChildren();
       go();
