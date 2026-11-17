@@ -11,7 +11,7 @@
 - `map.js`: 약도 데이터(`MAP`). `make_map.py`가 오픈스트리트맵에서 받아 만든다. 손으로 고치지 않는다.
 - `make_map.py`: 약도 생성 스크립트. 표준 라이브러리만 쓴다. 건물과 지점은 OSM id로 고른다.
 - `events.js`: 행사와 팝업 목록(`EVENTS`). 2026-11-17에 coex.co.kr을 보고 손으로 옮긴 스냅샷이다.
-- 미리보기: `.claude/launch.json`의 `seoul-maze` (python3 http.server, 8765 포트).
+- 미리보기: `.claude/launch.json`의 `seoul-maze` (python3 http.server, 8765 포트, 내 컴퓨터에서만 열림).
 
 지도와 정보의 원칙:
 

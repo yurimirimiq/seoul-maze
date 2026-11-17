@@ -17,6 +17,7 @@
   #pin { fill: #e5484d; stroke: #fff; stroke-width: .7; }
   ul { list-style: none; margin: 0; padding: 0; }
   .events li { margin-bottom: 8px; border: 1px solid #ccc; border-radius: 8px; }
+  .events li:not(:has(button)) { padding: 12px; color: #666; }
   .events li:has(button[aria-pressed="true"]) { border-color: #e5484d; background: #fff5f5; }
   .events button { display: block; width: 100%; padding: 12px 12px 4px; text-align: left; font: inherit; color: inherit; background: none; border: 0; }
   .events small { display: block; color: #666; }
@@ -95,7 +96,7 @@
   const day = d => d.slice(5).replace('-', '.');
   const fill = (id, events, emptyText) => {
     const list = document.getElementById(id);
-    if (!events.length) list.textContent = emptyText;
+    if (!events.length) list.append(Object.assign(document.createElement('li'), { textContent: emptyText }));
     for (const e of events) {
       const btn = document.createElement('button');
       btn.setAttribute('aria-pressed', 'false');
