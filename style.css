@@ -24,14 +24,14 @@ body { font-family: 'Pretendard Variable', Pretendard, -apple-system, system-ui,
 a { color: inherit; }
 ul { list-style: none; margin: 0; padding: 0; }
 
-h1 { margin: 0 0 12px; font-size: 1.75rem; font-weight: 700; line-height: 1.1; letter-spacing: -.035em; }
+h1 { margin: 0 0 12px; font-size: 1.25rem; font-weight: 700; line-height: 1.1; letter-spacing: -.035em; }
 h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 700; line-height: 1.3; letter-spacing: -.02em; border-bottom: 2px solid var(--ink); }
 
 /* 워드마크: 소문자 pathfinder, i의 점만 빨간 도착점 */
 .wordmark { font-weight: 700; letter-spacing: -.04em; line-height: 1; color: var(--ink); text-decoration: none; }
 .wordmark .i { position: relative; margin-left: .08em; } /* f의 갈고리와 점이 붙지 않게 조금 띄운다 */
 .wordmark .i::before { content: ''; position: absolute; left: 50%; bottom: .84em; width: .18em; height: .18em; margin-left: -.09em; border-radius: 50%; background: var(--here); }
-.brand { display: inline-block; margin-bottom: 10px; font-size: 1.125rem; }
+.brand { display: inline-block; margin-bottom: 8px; font-size: 1.875rem; } /* 장소 화면에서도 로고가 장소 이름보다 크다 */
 
 /* 홈: 워드마크, 한 줄 소개, 장소마다 미니 약도. 약도만 남색 판에 밝은 통로로 그려서 눈에 띄게 하고 나머지는 조용히 둔다 */
 .hero { padding: 40px 0 0; }
