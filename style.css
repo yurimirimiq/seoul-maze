@@ -163,5 +163,7 @@ h2 { margin: 36px 0 0; padding-bottom: 8px; font-size: 1.125rem; font-weight: 70
 .events li:not(:has(button)) { padding: 12px 8px; color: var(--muted); }
 
 footer { margin-top: 32px; font-size: .75rem; color: var(--muted); }
+.contact { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--rule); font-size: .875rem; } /* 홈 맨 아래: 만든 사람과 연락할 메일 */
+.contact b { color: var(--ink); }
 
 @media (prefers-reduced-motion: reduce) { #ping.go { animation: none; } }
