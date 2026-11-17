@@ -4,7 +4,7 @@
 새 장소 추가: 아래 PLACES에 항목을 하나 더 넣는다.
 
 - 건물, 길, 지하철 출구: 오픈스트리트맵에서 받는다. © OpenStreetMap contributors (ODbL)
-- 가게와 편의시설 위치: <장소>/poi.tsv가 있으면 읽어서 약도 좌표로 바꾼다.
+- 가게와 편의시설 위치, 실내 통로: <장소>/poi.tsv, <장소>/paths.tsv가 있으면 읽어서 약도 좌표로 바꾼다.
 """
 import json
 import math
@@ -104,23 +104,29 @@ def main(place):
         x, y = xy(found[osm_id]["lat"], found[osm_id]["lon"])
         spots.append({"name": name, "x": x, "y": y})
 
-    # 가게와 편의시설: poi.tsv 좌표를 돌리고 옮겨서 약도 좌표로 바꾼다
-    poi_file = f"{place}/poi.tsv"
-    if os.path.exists(poi_file):
-        deg, dx, dy = cfg["poi_transform"]
-        cos, sin, k = math.cos(math.radians(deg)), math.sin(math.radians(deg)), 0.1 / unit
-        for row in open(poi_file, encoding="utf-8"):
-            if row.startswith("#"):
-                continue
-            floor, kind, name, px, py = row.rstrip("\n").split("\t")
-            px, py = float(px), float(py)
-            spots.append({"name": name, "x": round(k * (cos * px - sin * py) + dx, 1), "y": round(k * (sin * px + cos * py) + dy, 1),
-                          "floor": floor, "kind": kind})
+    # 가게, 편의시설, 실내 통로: 공식 지도 좌표를 돌리고 옮겨서 약도 좌표로 바꾼다
+    def rows(name):
+        path = f"{place}/{name}"
+        return [r.rstrip("\n").split("\t") for r in open(path, encoding="utf-8") if not r.startswith("#")] if os.path.exists(path) else []
+
+    deg, dx, dy = cfg.get("poi_transform", (0, 0, 0))
+    cos, sin, k = math.cos(math.radians(deg)), math.sin(math.radians(deg)), 0.1 / unit
+
+    def place_xy(px, py):
+        px, py = float(px), float(py)
+        return round(k * (cos * px - sin * py) + dx, 1), round(k * (sin * px + cos * py) + dy, 1)
+
+    for floor, kind, name, px, py in rows("poi.tsv"):
+        x, y = place_xy(px, py)
+        spots.append({"name": name, "x": x, "y": y, "floor": floor, "kind": kind})
+    paths = {}  # 층 -> SVG 길 모양(d). 토막마다 M(시작) L(끝)로 잇는다.
+    for floor, x1, y1, x2, y2 in rows("paths.tsv"):
+        paths[floor] = paths.get(floor, "") + "M%s %sL%s %s" % (*place_xy(x1, y1), *place_xy(x2, y2))
     for i in buildings + spots:
         assert 0 <= i["x"] <= WIDTH and 0 <= i["y"] <= height, f"범위 밖: {i['name']}"
 
     data = {"width": WIDTH, "height": height, "main": buildings[0]["name"], "roads": roads, "roadNames": road_names,
-            "blocks": blocks, "buildings": buildings, "spots": spots}
+            "blocks": blocks, "buildings": buildings, "paths": paths, "spots": spots}
     os.makedirs(place, exist_ok=True)
     with open(f"{place}/map.js", "w", encoding="utf-8") as f:
         f.write("// make_map.py가 만든 파일. 손으로 고치지 말고 make_map.py를 다시 돌린다.\n")

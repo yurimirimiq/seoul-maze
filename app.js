@@ -17,7 +17,7 @@ const KINDS = {
 // 역 이름 -> 노선 번호. 새 장소를 넣을 때 그 장소의 역을 여기에 더한다. 노선 색은 style.css에 있다.
 const LINES = { '삼성역': '2', '봉은사역': '9' };
 
-// 약도 그리기: 길 -> 건물 -> 가게 점 -> 이름표 순서로 쌓는다
+// 약도 그리기: 길 -> 건물 -> 실내 통로 -> 가게 점 -> 이름표 순서로 쌓는다
 const svg = document.getElementById('map');
 const el = (tag, attrs, text, parent = svg) => {
   const n = document.createElementNS('http://www.w3.org/2000/svg', tag);
@@ -28,12 +28,19 @@ const el = (tag, attrs, text, parent = svg) => {
 svg.setAttribute('viewBox', `0 0 ${MAP.width} ${MAP.height}`);
 for (const r of MAP.roads) el('polyline', { points: r.pts, 'stroke-width': r.w, class: r.w >= 2.5 ? 'road big' : 'road' });
 for (const pts of MAP.blocks) el('polygon', { points: pts, class: 'block' });
-for (const b of MAP.buildings) el('polygon', { points: b.pts, class: b.name === MAP.main ? 'main' : '' });
+for (const b of MAP.buildings) el('polygon', { points: b.pts });
+// 실내 통로: 층마다 넓은 바닥 띠 위에 흰 길을 얹는다. 고른 층 것만 보인다.
+const halls = {};
+for (const [id, d] of Object.entries(MAP.paths || {})) {
+  halls[id] = el('g', { class: 'halls' });
+  el('path', { d, class: 'floorband' }, '', halls[id]);
+  el('path', { d, class: 'walk' }, '', halls[id]);
+}
 for (const n of MAP.roadNames) el('text', { x: n.x, y: n.y, class: 'roadname', transform: `rotate(${n.rot} ${n.x} ${n.y})` }, n.name);
 
 const signs = []; // 늘 보이는 것들이 차지한 자리. 가게 이름표가 이 위에 겹치지 않게 한다.
 const stores = MAP.spots.filter(s => s.floor).sort((a, b) => Object.keys(KINDS).indexOf(a.kind) - Object.keys(KINDS).indexOf(b.kind));
-for (const s of stores) s.dot = el('circle', { cx: s.x, cy: s.y, r: .8, fill: KINDS[s.kind] || KINDS['서비스'], class: 'spot' });
+for (const s of stores) s.dot = el('circle', { cx: s.x, cy: s.y, r: .7, fill: KINDS[s.kind] || KINDS['서비스'], class: 'spot' });
 for (const b of MAP.buildings) { el('text', { x: b.x, y: b.y, class: 'bname' }, b.name); signs.push({ x: b.x, y: b.y, name: b.name, center: true }); }
 for (const s of stores) s.label = el('text', { x: s.x, y: s.y, dx: '.8em', class: s.kind === '편의시설' ? 'spotname minor' : 'spotname' }, s.name);
 for (const s of MAP.spots.filter(s => !s.floor)) {
@@ -80,8 +87,10 @@ const relabel = () => {
   const font = 3 * px / zoom;             // 글자 크기는 키워도 그대로다
   const width = name => [...name].reduce((w, ch) => w + (ch.charCodeAt(0) < 128 ? .6 : 1), 0) * font;
   const kept = signs.map(g => ({ x: g.x * px - width(g.name) / 2, y: g.y * px - font * .7, w: width(g.name), h: font * 1.4 }));
-  const here = stores.filter(s => s.floor === floor);
-  for (const s of [...picked.filter(s => s.floor), ...here.filter(s => !picked.includes(s))]) {
+  // 편의시설은 목록에서 골랐을 때만 보인다. 늘 보이면 가게 점과 섞여 어지럽다.
+  const shown = s => s.floor === floor && (s.kind !== '편의시설' || picked.includes(s));
+  for (const s of stores) s.dot.style.display = s.label.style.display = shown(s) ? '' : 'none';
+  for (const s of [...picked.filter(shown), ...stores.filter(s => shown(s) && !picked.includes(s))]) {
     const box = { x: s.x * px, y: s.y * px - font * .9, w: width(s.name) + font * 1.6, h: font * 1.8 }; // 점부터 이름 끝까지, 숨 쉴 틈을 조금 둔다
     const show = picked.includes(s) || !kept.some(k => overlaps(k, box));
     s.label.style.display = show ? '' : 'none';
@@ -159,7 +168,7 @@ const setFloor = id => {
   if (!f) return;
   floor = id;
   for (const b of floorBtns.children) b.setAttribute('aria-pressed', b.dataset.floor === id);
-  for (const s of stores) s.dot.style.display = s.label.style.display = s.floor === id ? '' : 'none';
+  for (const f in halls) halls[f].style.display = f === id ? '' : 'none';
   pick(null, ''); // 다른 층에서 고른 표시를 지운다
 
   panel.replaceChildren();
