@@ -17,6 +17,27 @@
   <img src="docs/gosok.jpg" width="30%" alt="고속터미널 지하 1층 약도">
 </p>
 
+## 피치덱
+
+옆으로 밀어서 넘겨 본다 (12장). 화면 가득 한 장씩 보려면 [넘겨 보는 피치덱](https://yurimirimiq.github.io/seoul-maze/deck.html)을 연다.
+
+<table>
+<tr>
+<td><img src="docs/deck/01.jpg" width="640" alt="1장: 표지"></td>
+<td><img src="docs/deck/02.jpg" width="640" alt="2장: 문제"></td>
+<td><img src="docs/deck/03.jpg" width="640" alt="3장: 원인"></td>
+<td><img src="docs/deck/04.jpg" width="640" alt="4장: 해결"></td>
+<td><img src="docs/deck/05.jpg" width="640" alt="5장: 제품"></td>
+<td><img src="docs/deck/06.jpg" width="640" alt="6장: 현황"></td>
+<td><img src="docs/deck/07.jpg" width="640" alt="7장: 만드는 방식"></td>
+<td><img src="docs/deck/08.jpg" width="640" alt="8장: 다음 단계"></td>
+<td><img src="docs/deck/09.jpg" width="640" alt="9장: 수익 모델"></td>
+<td><img src="docs/deck/10.jpg" width="640" alt="10장: 팀"></td>
+<td><img src="docs/deck/11.jpg" width="640" alt="11장: 필요한 것"></td>
+<td><img src="docs/deck/12.jpg" width="640" alt="12장: 마무리"></td>
+</tr>
+</table>
+
 ## 왜 만드나
 
 "서울 3대 미로"라고 불리는 잠실역, 코엑스, 고속터미널은 갈 때마다 길이 헷갈린다.
