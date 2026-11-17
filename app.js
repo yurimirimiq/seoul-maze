@@ -1,12 +1,12 @@
 // 날짜가 YYYY-MM-DD 글자라서 글자 비교만으로 앞뒤를 가릴 수 있다.
 const isOpen = (e, today) => e.start <= today && today <= e.end;
 // 'Hall C (3층)' -> ['Hall C', '3'], 층이 안 적힌 곳은 ['로비']
-const splitFloor = place => { const m = place.match(/\s*\(?(\d)층\)?/); return m ? [place.replace(m[0], '').trim(), m[1]] : [place]; };
+const splitFloor = place => { const m = place.match(/\s*\(?(지하 ?)?(\d+)층\)?/); return m ? [place.replace(m[0], '').trim(), (m[1] ? 'B' : '') + m[2]] : [place]; };
 // 두 네모가 겹치는지. 이름표가 서로 겹치지 않게 고를 때 쓴다.
 const overlaps = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 const t = { start: '2026-01-01', end: '2026-01-31' };
 console.assert(isOpen(t, '2026-01-01') && isOpen(t, '2026-01-31') && !isOpen(t, '2025-12-31') && !isOpen(t, '2026-02-01'), 'isOpen 자가 점검 실패');
-console.assert(splitFloor('Hall C, D (3층)').join() === 'Hall C, D,3' && splitFloor('컨퍼런스룸(남) 4층').join() === '컨퍼런스룸(남),4' && splitFloor('로비').join() === '로비', 'splitFloor 자가 점검 실패');
+console.assert(splitFloor('Hall C, D (3층)').join() === 'Hall C, D,3' && splitFloor('컨퍼런스룸(남) 4층').join() === '컨퍼런스룸(남),4' && splitFloor('로비').join() === '로비' && splitFloor('팝업 행사장 (지하 1층)').join() === '팝업 행사장,B1' && splitFloor('행사장 (10층)').join() === '행사장,10', 'splitFloor 자가 점검 실패');
 console.assert(overlaps({ x: 0, y: 0, w: 10, h: 10 }, { x: 9, y: 9, w: 5, h: 5 }) && !overlaps({ x: 0, y: 0, w: 10, h: 10 }, { x: 10, y: 0, w: 5, h: 5 }), 'overlaps 자가 점검 실패');
 
 // 가게 종류 -> 칸 색. 종류 이름은 장소마다 달라서(패션의류, 롯데백화점 쇼핑 ...) 들어 있는 낱말로 고른다.
@@ -308,7 +308,7 @@ const fill = (id, events, emptyText, dateText) => {
     const what = add(btn, 'span', '', 'what');
     add(what, 'b', e.name);
     add(add(what, 'small'), 'span', place).after(e.cat);
-    if (where) add(btn, 'span', where + '층', 'floor');
+    if (where) add(btn, 'span', FLOORS.find(f => f.id === where)?.name || where + '층', 'floor');
     btn.onclick = () => {
       if (where) setFloor(where); // 행사가 열리는 층으로 같이 바꾼다
       pick(btn, e.at || MAP.main);

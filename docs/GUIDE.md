@@ -28,7 +28,7 @@
 
 ## 자료 고치는 법
 
-- **행사, 팝업 고치기**: `coex/events.js`만 고친다. 기간이 지난 것은 화면에서 자동으로 빠진다.
+- **행사, 팝업 고치기**: `<장소>/events.js`를 고친다. 형식은 `coex/events.js` 맨 위에 적혀 있다. 기간이 지난 것은 화면에서 자동으로 빠진다. 잠실은 [롯데월드타워·몰 이벤트](https://www.lwt.co.kr/ko/event/all.do), 고속터미널은 [신세계백화점 강남점 쇼핑 정보](https://www.shinsegae.com/shopping/list.do?storeCd=SC00002)를 보고 옮긴다.
 - **층별 안내 고치기**: `<장소>/floors.js`를 고친다.
 - **코엑스 가게 목록 새로 받기**: `python3 tools/make_stores.py coex`
 - **약도 고치기**: `tools/make_map.py`에서 이름 붙일 건물이나 지점을 넣고 빼고 `python3 tools/make_map.py <장소>`. `map.js`와 미니 약도 `thumb.svg`가 새로 만들어진다.
