@@ -17,7 +17,7 @@
 - 롯데백화점, 롯데월드몰(에비뉴엘·타워 포함), 캐슬플라자의 실내 약도.
 - 바깥 길과 건물은 없고 실내만 나온다. 공식 실내 지도가 건물들을 실제보다 벌려 그려 놓아서 바깥 지도에 맞출 수 없었다. 그래서 GPS도 못 쓴다.
 - 지하철 출구 표지판과 행사 목록은 없다. 지하 1층의 "지하철" 표시가 잠실역으로 이어지는 곳이다.
-- 통로 자료가 없어서 길 안내는 직선이다.
+- 길 안내는 통로를 따라간다. 공식 자료에 통로 선이 없어서, 바닥에서 가게 칸을 뺀 빈 곳의 가운데를 따라 통로 선을 만들어 냈다(`tools/make_jamsil_paths.py`). 건물이 다르면(백화점에서 월드몰로) 약도에서 건물이 떨어져 있어 직선으로 나온다.
 
 ### 고속터미널
 
@@ -32,6 +32,7 @@
 - **층별 안내 고치기**: `<장소>/floors.js`를 고친다.
 - **코엑스 가게 목록 새로 받기**: `python3 tools/make_stores.py coex`
 - **약도 고치기**: `tools/make_map.py`에서 이름 붙일 건물이나 지점을 넣고 빼고 `python3 tools/make_map.py <장소>`. `map.js`와 미니 약도 `thumb.svg`가 새로 만들어진다.
+- **잠실 통로 선 다시 만들기**: `python3 tools/make_jamsil_paths.py`, `python3 tools/make_map.py jamsil`. `jamsil/shapes.tsv`를 새로 받았을 때 돌린다.
 - **지하상가 칸 고치기**: `tools/make_gotomall.py`의 줄과 번호를 고치고 `python3 tools/make_gotomall.py`, `python3 tools/make_map.py gosok`
 - **신세계 매장 자리 다시 받기**: 신세계백화점 강남점 층별 안내에서 층마다 "층 안내도" 그림을 받아 `11.png` ... `B1.png`로, 지하 1층 스위트 파크 탭의 그림을 `B1-detail.png`로 한 폴더에 넣고 `python3 tools/make_shinsegae.py <폴더>`, `python3 tools/make_map.py gosok`. 맥에서만 된다(글자 읽기에 맥의 Vision을 쓴다).
 - **고속버스터미널 가게 다시 받기**: `python3 tools/make_terminal.py`, `python3 tools/make_map.py gosok`. 공식 사이트에서 목록과 약도 그림을 받는다. 맥에서만 된다.
