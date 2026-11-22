@@ -10,7 +10,7 @@ console.assert(splitFloor('Hall C, D (3층)').join() === 'Hall C, D,3' && splitF
 console.assert(overlaps({ x: 0, y: 0, w: 10, h: 10 }, { x: 9, y: 9, w: 5, h: 5 }) && !overlaps({ x: 0, y: 0, w: 10, h: 10 }, { x: 10, y: 0, w: 5, h: 5 }), 'overlaps 자가 점검 실패');
 
 // 가게 종류 -> 칸 색. 종류 이름은 장소마다 달라서(패션의류, 롯데백화점 쇼핑 ...) 들어 있는 낱말로 고른다.
-// 앞에 있을수록 약도에서 이름표가 먼저 나온다. 어디에도 안 맞으면 시설 색(회색)이다.
+// 어디에도 안 맞으면 시설 색(회색)이다. 칸 크기가 같을 때는 앞에 있는 종류의 이름표가 먼저 나온다.
 const TINTS = [
   [/엔터|문화|갤러리|서점|취미/, '#7c5cd6'], [/라이프|리빙/, '#2f9a6a'],
   [/잡화|액세서리|ACC|소품|핸드백|구두|슈즈|주얼리|러기지|타이/, '#5a66cf'],
@@ -41,7 +41,12 @@ for (const n of MAP.roadNames) el('text', { x: n.x, y: n.y, class: 'roadname', t
 // 가게와 편의시설을 층별로 나눠 둔다. 그림은 그 층을 처음 볼 때 그린다(잠실처럼 칸이 수천 개인 곳이 있어서).
 const byFloor = {};
 for (const s of MAP.spots) if (s.floor) (byFloor[s.floor] ||= []).push(s);
-for (const list of Object.values(byFloor)) list.sort((a, b) => rank(a.kind) - rank(b.kind));
+// 이름표는 큰 칸부터 나온다. 큰 가게가 길잡이라서, 줄여 본 약도에는 큰 가게 이름만 남아야 덜 어지럽다.
+// 칸 없이 점만 찍힌 가게(별마당도서관)는 맨 앞에, 가게가 아닌 것(편의시설, 안내)은 맨 뒤에 둔다.
+const area = pts => { const p = pts.split(' ').map(q => q.split(',')); return Math.abs(p.reduce((a, [x, y], i) => a + x * p[(i + 1) % p.length][1] - y * p[(i + 1) % p.length][0], 0)) / 2; };
+console.assert(area('0,0 4,0 4,3 0,3') === 12, 'area 자가 점검 실패');
+for (const s of MAP.spots) if (s.floor) s.size = minor(s) ? -1 : s.shape == null ? Infinity : area(MAP.shapes[s.floor][s.shape][1]);
+for (const list of Object.values(byFloor)) list.sort((a, b) => (b.size === a.size ? 0 : b.size - a.size) || rank(a.kind) - rank(b.kind));
 const drawFloor = id => {
   const g = el('g', {}, '', indoor);
   const list = MAP.shapes[id] || [];
@@ -130,9 +135,10 @@ const relabel = () => {
     if (s.dot) s.dot.style.display = s.kind !== '편의시설' || picked.includes(s) ? '' : 'none';
   }
   for (const s of [...picked.filter(s => s.floor === floor), ...here.filter(s => shown(s) && !picked.includes(s))]) {
-    // 이름이 차지할 자리에 숨 쉴 틈을 조금 둔다. 칸이 있는 가게는 가운데 정렬, 점만 있는 곳은 점 오른쪽.
-    const w = width(s.name) + font * (s.room ? .4 : 1.4);
-    const box = { x: s.x * px - (s.room ? w / 2 : 0), y: s.y * px - font * .65, w, h: font * 1.3 };
+    // 이름이 차지할 자리에 숨 쉴 틈을 넉넉히 둔다(글자 한 자쯤). 이름끼리 붙어 있으면 약도가 글자로 덮여 보인다.
+    // 칸이 있는 가게는 가운데 정렬, 점만 있는 곳은 점 오른쪽.
+    const w = width(s.name) + font * (s.room ? 2 : 3);
+    const box = { x: s.x * px - (s.room ? w / 2 : font), y: s.y * px - font * 1.1, w, h: font * 2.2 };
     // 끝까지 키웠을 때는 겹치더라도 이름을 다 보여 준다. 같은 이름끼리 겹친 것(위아래 에스컬레이터 쌍)만 하나로 둔다.
     const hit = kept.find(k => overlaps(k, box));
     const show = picked.includes(s) || !hit || (zoom === MAX_ZOOM && hit.name !== s.name);
@@ -334,7 +340,8 @@ const fill = (id, events, dateText) => {
       if (where) setFloor(where); // 행사가 열리는 층으로 같이 바꾼다
       pick(btn, e.at || MAP.main);
     };
-    if (e.url) add(li, 'a', '공식 안내 보기').href = e.url;
+    // 줄마다 '공식 안내 보기'를 한 줄씩 되풀이하면 목록이 링크로 덮여서, 줄 오른쪽 아래에 작게 둔다
+    if (e.url) { const a = add(li, 'a', '안내 ↗'); a.href = e.url; a.setAttribute('aria-label', e.name + ' 공식 안내 보기'); }
   }
 };
 const byStart = (a, b) => a.start.localeCompare(b.start);

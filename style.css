@@ -155,7 +155,7 @@ body:has(.mapwrap.full) { overflow: hidden; }
 .cols button[aria-pressed="true"] { font-weight: 600; color: var(--here); }
 
 /* 행사 시간표 */
-.events li { border-bottom: 1px solid var(--rule); border-left: 4px solid transparent; padding-bottom: 10px; }
+.events li { position: relative; border-bottom: 1px solid var(--rule); border-left: 4px solid transparent; padding-bottom: 10px; }
 .events li:has(button[aria-pressed="true"]) { border-left-color: var(--here); background: #fff; }
 .events button { display: grid; grid-template-columns: var(--date-col) 1fr auto; column-gap: 10px; align-items: start;
   width: 100%; padding: 12px 8px 2px; text-align: left; font: inherit; color: inherit; background: none; border: 0; }
@@ -164,7 +164,8 @@ body:has(.mapwrap.full) { overflow: hidden; }
 .what b { display: block; font-weight: 600; line-height: 1.35; }
 .what small span { margin-right: 8px; color: var(--ink); font-weight: 500; }
 .floor { font-size: .875rem; font-weight: 600; line-height: 1.6; white-space: nowrap; }
-.events a { display: inline-block; margin-left: calc(var(--date-col) + 18px); padding: 4px 0; font-size: .8125rem; color: var(--muted); }
+.what small { padding-right: 3.5em; } /* 오른쪽 아래 '안내' 링크 자리 */
+.events a { position: absolute; right: 8px; bottom: 5px; padding: 6px 0 6px 12px; font-size: .8125rem; color: var(--muted); text-decoration: none; }
 .events li:not(:has(button)) { padding: 12px 8px; color: var(--muted); }
 
 footer { margin-top: 32px; font-size: .75rem; color: var(--muted); }
